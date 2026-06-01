@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NVT-217 - Supplier Change Impact Analysis</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Serif:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg-base: #0a0e16;
+    --bg-elev-1: #11161f;
+    --bg-elev-2: #161c28;
+    --bg-elev-3: #1c2331;
+    --border: #2a3245;
+    --border-strong: #3a4356;
+    --text-primary: #e8e6e0;
+    --text-secondary: #b4b8c5;
+    --text-muted: #6b7184;
+    --accent: #d4a574;
+    --critical: #ef4444;
+    --critical-bg: rgba(239, 68, 68, 0.08);
+    --major: #f97316;
+    --major-bg: rgba(249, 115, 22, 0.08);
+    --minor: #eab308;
+    --minor-bg: rgba(234, 179, 8, 0.08);
+    --ok: #10b981;
+    --ok-bg: rgba(16, 185, 129, 0.08);
+    --info: #06b6d4;
+    --info-bg: rgba(6, 182, 212, 0.08);
+    --violet: #a78bfa;
+    --violet-bg: rgba(167, 139, 250, 0.08);
+    --font-display: 'IBM Plex Serif', Georgia, serif;
+    --font-body: 'IBM Plex Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+    --font-mono: 'IBM Plex Mono', 'SF Mono', Menlo, monospace;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body {
+    background: var(--bg-base); color: var(--text-primary);
+    font-family: var(--font-body); font-size: 14px; line-height: 1.55;
+    -webkit-font-smoothing: antialiased; min-height: 100vh;
+  }
+  body {
+    background-image:
+      radial-gradient(ellipse at top, rgba(212, 165, 116, 0.04) 0%, transparent 50%),
+      radial-gradient(ellipse at bottom left, rgba(167, 139, 250, 0.03) 0%, transparent 60%);
+    background-attachment: fixed;
+  }
+  .grid-overlay {
+    position: fixed; inset: 0;
+    background-image:
+      linear-gradient(rgba(255,255,255,0.012) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,0.012) 1px, transparent 1px);
+    background-size: 48px 48px; pointer-events: none; z-index: 0;
+  }
+  .container { position: relative; z-index: 1; max-width: 1200px; margin: 0 auto; padding: 32px 28px 64px; }
+
+  /* HEADER */
+  header.masthead {
+    border-top: 1px solid var(--border); border-bottom: 1px solid var(--border);
+    padding: 24px 0; display: grid; grid-template-columns: 1fr auto; gap: 24px;
+    align-items: end; margin-bottom: 28px;
+  }
+  .masthead .eyebrow { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--accent); font-weight: 500; margin-bottom: 8px; }
+  .masthead h1 { font-family: var(--font-display); font-weight: 600; font-size: 34px; line-height: 1.15; margin-bottom: 4px; letter-spacing: -0.01em; }
+  .masthead .subtitle { font-family: var(--font-display); font-style: italic; color: var(--text-secondary); font-size: 16px; }
+  .meta-panel { text-align: right; font-family: var(--font-mono); font-size: 11px; color: var(--text-muted); line-height: 1.8; }
+  .meta-panel .value { color: var(--text-secondary); }
+  .ai-tag { display: inline-flex; align-items: center; gap: 6px; background: var(--bg-elev-2); border: 1px solid var(--border); padding: 4px 10px; border-radius: 4px; font-family: var(--font-mono); font-size: 10px; color: var(--accent); margin-top: 6px; }
+  .ai-tag::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 8px var(--accent); }
+
+  /* CHANGE IDENTITY BANNER */
+  .change-banner {
+    display: grid; grid-template-columns: 1fr auto 1fr; gap: 20px; align-items: center;
+    background: var(--bg-elev-1); border: 1px solid var(--border); border-radius: 6px;
+    padding: 22px 28px; margin-bottom: 12px;
+  }
+  .change-banner .grade { text-align: center; }
+  .change-banner .grade .g-label { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-muted); margin-bottom: 8px; }
+  .change-banner .grade .g-name { font-family: var(--font-display); font-size: 24px; font-weight: 600; color: var(--text-primary); }
+  .change-banner .grade.current .g-name { color: var(--text-secondary); }
+  .change-banner .grade.new .g-name { color: var(--accent); }
+  .change-banner .grade .g-meta { font-family: var(--font-mono); font-size: 10.5px; color: var(--text-muted); margin-top: 4px; }
+  .change-banner .arrow { font-size: 28px; color: var(--accent); text-align: center; }
+  .change-banner .arrow .a-label { font-family: var(--font-mono); font-size: 9px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-muted); margin-top: 2px; }
+
+  /* NET VERDICT */
+  .net-verdict {
+    background: linear-gradient(135deg, rgba(249,115,22,0.10), rgba(167,139,250,0.05));
+    border: 1px solid var(--major); border-left: 5px solid var(--major); border-radius: 6px;
+    padding: 20px 26px; margin-bottom: 28px;
+    display: grid; grid-template-columns: auto 1fr; gap: 22px; align-items: center;
+  }
+  .net-verdict .stamp { font-family: var(--font-mono); font-weight: 600; text-align: center; border: 2px solid var(--major); border-radius: 6px; padding: 12px 16px; color: var(--major); min-width: 170px; }
+  .net-verdict .stamp .big { font-size: 17px; letter-spacing: 0.03em; line-height: 1.2; }
+  .net-verdict .stamp .small { font-size: 9.5px; letter-spacing: 0.1em; margin-top: 6px; color: var(--text-secondary); }
+  .net-verdict .statement h2 { font-family: var(--font-display); font-size: 18px; font-weight: 600; margin-bottom: 6px; line-height: 1.3; }
+  .net-verdict .statement p { color: var(--text-secondary); font-size: 13px; line-height: 1.6; }
+  .net-verdict .statement .hl { color: var(--major); font-weight: 600; }
+
+  /* SECTION TITLE */
+  .section-title { font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--accent); font-weight: 600; margin: 32px 0 14px; padding-bottom: 8px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: baseline; }
+  .section-title .hint { color: var(--text-muted); font-size: 10px; letter-spacing: 0.06em; text-transform: none; font-style: italic; font-family: var(--font-display); }
+
+  /* FORMULATION DELTA TABLE */
+  .table-wrapper { border: 1px solid var(--border); background: var(--bg-elev-1); border-radius: 6px; overflow: hidden; }
+  table.delta { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .delta thead th { background: var(--bg-elev-2); text-align: left; padding: 12px 16px; font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-muted); font-weight: 600; border-bottom: 1px solid var(--border); }
+  .delta thead th.center { text-align: center; }
+  .delta tbody tr { border-bottom: 1px solid var(--border); }
+  .delta tbody tr:last-child { border-bottom: none; }
+  .delta tbody td { padding: 13px 16px; vertical-align: top; color: var(--text-secondary); }
+  .delta .aspect { color: var(--text-primary); font-weight: 500; }
+  .delta .val-current { color: var(--text-secondary); }
+  .delta .val-new { color: var(--text-primary); }
+  .delta .chg { text-align: center; }
+  .chg-tag { display: inline-block; font-family: var(--font-mono); font-size: 9.5px; font-weight: 600; letter-spacing: 0.06em; padding: 3px 8px; border-radius: 2px; border: 1px solid; text-transform: uppercase; }
+  .chg-removed { color: var(--ok); border-color: var(--ok); background: var(--ok-bg); }
+  .chg-added { color: var(--violet); border-color: var(--violet); background: var(--violet-bg); }
+  .chg-changed { color: var(--minor); border-color: var(--minor); background: var(--minor-bg); }
+  .chg-same { color: var(--text-muted); border-color: var(--border-strong); }
+  .row-flag { box-shadow: inset 3px 0 0 var(--major); }
+
+  /* IMPACT COLUMNS (down / up / unchanged) */
+  .impact-cols { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
+  .impact-col { background: var(--bg-elev-1); border: 1px solid var(--border); border-radius: 6px; overflow: hidden; }
+  .impact-col .ic-head { padding: 14px 18px; font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; font-weight: 600; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 8px; }
+  .impact-col.down .ic-head { color: var(--ok); background: var(--ok-bg); }
+  .impact-col.up .ic-head { color: var(--violet); background: var(--violet-bg); }
+  .impact-col.same .ic-head { color: var(--text-secondary); background: var(--bg-elev-2); }
+  .ic-arrow { font-size: 14px; }
+  .compound-item { padding: 13px 18px; border-bottom: 1px solid var(--border); }
+  .compound-item:last-child { border-bottom: none; }
+  .compound-item .ci-name { color: var(--text-primary); font-weight: 500; font-size: 13px; }
+  .compound-item .ci-note { font-size: 11.5px; color: var(--text-secondary); margin-top: 4px; line-height: 1.5; }
+  .compound-item .ci-tox { display: inline-block; font-family: var(--font-mono); font-size: 9px; font-weight: 600; letter-spacing: 0.05em; padding: 1px 6px; border-radius: 2px; margin-top: 6px; }
+  .tox-concern { color: var(--critical); background: var(--critical-bg); }
+  .tox-new { color: var(--violet); background: var(--violet-bg); }
+  .tox-neutral { color: var(--text-muted); border: 1px solid var(--border-strong); }
+  .compound-item .ci-cite { font-family: var(--font-mono); font-size: 9.5px; color: var(--text-muted); margin-top: 6px; display: block; }
+
+  /* RE-QUALIFICATION ACTIONS */
+  .actions-list { background: var(--bg-elev-1); border: 1px solid var(--border); border-radius: 6px; padding: 6px 24px; }
+  .action { display: grid; grid-template-columns: 40px 1fr auto; gap: 18px; padding: 16px 0; border-bottom: 1px solid var(--border); align-items: start; }
+  .action:last-child { border-bottom: none; }
+  .action .a-num { font-family: var(--font-mono); font-size: 18px; font-weight: 600; color: var(--accent); line-height: 1.3; }
+  .action .a-body .a-title { color: var(--text-primary); font-weight: 600; font-size: 13.5px; margin-bottom: 4px; }
+  .action .a-body .a-desc { color: var(--text-secondary); font-size: 12.5px; line-height: 1.55; }
+  .action .a-body .a-cite { font-family: var(--font-mono); font-size: 10px; color: var(--text-muted); margin-top: 5px; display: inline-block; }
+  .action .a-meta { text-align: right; min-width: 130px; }
+  .action .a-owner { font-family: var(--font-mono); font-size: 10.5px; color: var(--text-secondary); }
+  .action .a-prio { display: inline-block; font-family: var(--font-mono); font-size: 9px; font-weight: 600; letter-spacing: 0.06em; padding: 2px 7px; border-radius: 2px; border: 1px solid; text-transform: uppercase; margin-top: 6px; }
+  .prio-must { color: var(--critical); border-color: var(--critical); background: var(--critical-bg); }
+  .prio-should { color: var(--minor); border-color: var(--minor); background: var(--minor-bg); }
+
+  /* TIMELINE STRIP */
+  .timeline-strip { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1px; background: var(--border); border: 1px solid var(--border); border-radius: 6px; overflow: hidden; margin-top: 4px; }
+  .ts-cell { background: var(--bg-elev-1); padding: 16px 18px; }
+  .ts-cell .ts-when { font-family: var(--font-mono); font-size: 11px; color: var(--accent); font-weight: 600; margin-bottom: 6px; }
+  .ts-cell .ts-what { font-size: 12px; color: var(--text-secondary); line-height: 1.45; }
+
+  /* LEGEND + FOOTER */
+  .legend { margin-top: 32px; padding: 22px 24px; background: var(--bg-elev-1); border: 1px solid var(--border); border-radius: 6px; display: grid; grid-template-columns: 1fr 1fr; gap: 28px; }
+  .legend h4 { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--accent); font-weight: 600; margin-bottom: 12px; }
+  .legend .doc-row, .legend .ev-row { font-family: var(--font-mono); font-size: 11px; color: var(--text-secondary); padding: 4px 0; border-bottom: 1px dashed var(--border); }
+  .legend .doc-row .doc { color: var(--accent); font-weight: 600; }
+  .legend .ev-row .swatch { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 8px; vertical-align: middle; border: 1px solid; }
+  .sw-down { background: var(--ok-bg); border-color: var(--ok); }
+  .sw-up { background: var(--violet-bg); border-color: var(--violet); }
+  .sw-same { background: transparent; border-color: var(--border-strong); }
+  .disclaimer { margin-top: 20px; padding: 16px 20px; background: var(--bg-elev-2); border: 1px solid var(--border-strong); border-radius: 6px; font-size: 12px; color: var(--text-secondary); line-height: 1.6; }
+  .disclaimer strong { color: var(--accent); }
+  .doc-footer { margin-top: 28px; padding-top: 20px; border-top: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; font-family: var(--font-mono); font-size: 11px; color: var(--text-muted); }
+  .doc-footer .confidential { color: var(--accent); letter-spacing: 0.1em; }
+
+  @media (max-width: 920px) {
+    .change-banner { grid-template-columns: 1fr; }
+    .change-banner .arrow { transform: rotate(90deg); }
+    .net-verdict { grid-template-columns: 1fr; }
+    .impact-cols { grid-template-columns: 1fr; }
+    .timeline-strip { grid-template-columns: 1fr 1fr; }
+    .action { grid-template-columns: 30px 1fr; }
+    .action .a-meta { grid-column: 2; text-align: left; }
+    .legend { grid-template-columns: 1fr; }
+    .masthead { grid-template-columns: 1fr; }
+    .meta-panel { text-align: left; }
+  }
+</style>
+</head>
+<body>
+<div class="grid-overlay"></div>
+<div class="container">
+
+  <header class="masthead">
+    <div>
+      <div class="eyebrow">Artifact 04  ·  Extractables &amp; Leachables  ·  Supplier Change Control</div>
+      <h1>Supplier Change Impact Analysis</h1>
+      <div class="subtitle">NVT-217 stopper - ElastoSeal change notification ESM-CN-2025-014</div>
+    </div>
+    <div class="meta-panel">
+      <div>Supplier  <span class="value">ElastoSeal Materials AG</span></div>
+      <div>Notification  <span class="value">ESM-CN-2025-014</span></div>
+      <div>Class  <span class="value">B - re-qualification</span></div>
+      <div>Response due  <span class="value">08 Dec 2025</span></div>
+      <div class="ai-tag">AI-assisted synthesis  ·  cite sources</div>
+    </div>
+  </header>
+
+  <!-- CHANGE IDENTITY -->
+  <div class="change-banner">
+    <div class="grade current">
+      <div class="g-label">Current grade</div>
+      <div class="g-name">BR-540F</div>
+      <div class="g-meta">DBA + ZDBC accelerators · cure 165 C / 12 min</div>
+    </div>
+    <div class="arrow">&rarr;<div class="a-label">Formulation change</div></div>
+    <div class="grade new">
+      <div class="g-label">Proposed grade</div>
+      <div class="g-name">BR-540F-Eco</div>
+      <div class="g-meta">ZBEC accelerator · DBA removed · cure 170 C / 10 min</div>
+    </div>
+  </div>
+
+  <!-- NET VERDICT -->
+  <div class="net-verdict">
+    <div class="stamp">
+      <div class="big">RE-QUALIFICATION<br>REQUIRED</div>
+      <div class="small">NOT A SIMPLE RISK REDUCTION</div>
+    </div>
+    <div class="statement">
+      <h2>The change reduces the known NDBA pathway but introduces a new, uncharacterized nitrosamine pathway and a hotter cure.</h2>
+      <p>Removing the dibutylamine accelerator is expected to lower NDBA at source. However, the replacement ZBEC accelerator carries a dibenzylamine moiety, a precursor for <span class="hl">N-nitroso-dibenzylamine (NDBzA), which is not in the current 11-compound analytical panel,</span> and the cure temperature rises from 165 to 170 C, a recognized nitrosamine-formation factor. Net nitrosamine risk cannot be concluded as reduced until the new grade is characterized under sponsor conditions.</p>
+    </div>
+  </div>
+
+  <!-- FORMULATION DELTA -->
+  <div class="section-title">Formulation delta <span class="hint">per ESM-CN-2025-014 §2 - rows with a side marker carry an E&amp;L implication</span></div>
+  <div class="table-wrapper">
+    <table class="delta" id="delta">
+      <thead>
+        <tr>
+          <th style="width:22%">Formulation aspect</th>
+          <th style="width:31%">Current (BR-540F)</th>
+          <th style="width:31%">Proposed (BR-540F-Eco)</th>
+          <th class="center" style="width:16%">Change</th>
+        </tr>
+      </thead>
+      <tbody id="delta-body"></tbody>
+    </table>
+  </div>
+
+  <!-- COMPOUND IMPACT -->
+  <div class="section-title">Projected impact on the extractables profile <span class="hint">supplier projection (CN §4), to be verified by sponsor study</span></div>
+  <div class="impact-cols" id="impact-cols"></div>
+
+  <!-- RE-QUALIFICATION PLAN -->
+  <div class="section-title">Re-qualification action plan <span class="hint">customer actions per CN §5, prioritized by Claude synthesis</span></div>
+  <div class="actions-list" id="actions-list"></div>
+
+  <!-- TRANSITION TIMELINE -->
+  <div class="section-title">Transition timeline <span class="hint">supplier availability per CN §6, gating sponsor activities</span></div>
+  <div class="timeline-strip" id="timeline-strip"></div>
+
+  <!-- LEGEND -->
+  <div class="legend">
+    <div>
+      <h4>Source documents - traceability</h4>
+      <div class="doc-row"><span class="doc">ESM-CN-2025-014</span>  ·  Supplier Change Notification (08 Sep 2025)</div>
+      <div class="doc-row"><span class="doc">NVT-217-ES-001</span> v1.1  ·  Extractables Study Report</div>
+      <div class="doc-row"><span class="doc">NVT-217-LS-002</span> v1.0  ·  Leachables Stability (24M interim)</div>
+      <div class="doc-row"><span class="doc">NVT-217-RA-001</span> v2.0  ·  Internal E&amp;L Risk Assessment</div>
+      <div class="doc-row"><span class="doc">NVT-217-CCS-001</span> v2.0  ·  Container Closure System</div>
+    </div>
+    <div>
+      <h4>Impact direction key</h4>
+      <div class="ev-row"><span class="swatch sw-down"></span> Decreases or removed - lower migratable burden</div>
+      <div class="ev-row"><span class="swatch sw-up"></span> Appears or increases - new species to characterize</div>
+      <div class="ev-row"><span class="swatch sw-same"></span> Unchanged - per supplier; verify in comparative study</div>
+    </div>
+  </div>
+
+  <div class="disclaimer">
+    <strong>Scope and limitations.</strong> Impact directions shown are the supplier's projections (ESM-CN-2025-014 §4) plus Claude's inferences from formulation chemistry; they are not sponsor-generated data. The net-risk verdict is an INFERRED conclusion pending a comparative extractables study and leachables bridging under representative conditions. NDBzA risk is currently unquantified because the compound is outside the validated panel. All conclusions require QA, RA, and toxicology review before the change is accepted or rejected.
+  </div>
+
+  <div class="doc-footer">
+    <div>Generated by Claude · E&amp;L Scientific Copilot · Synthesis from project knowledge</div>
+    <div class="confidential">CONFIDENTIAL · AI output requires QA / RA / Toxicology review</div>
+  </div>
+
+</div>
+
+<script>
+// =================== FORMULATION DELTA DATA ===================
+const DELTA = [
+  { aspect: "Base polymer", current: "Bromobutyl (BIIR)", proposed: "Bromobutyl (BIIR)", change: "same", flag: false },
+  { aspect: "Primary accelerator", current: "MBT + ZDBC", proposed: "MBT + ZBEC (zinc dibenzyldithiocarbamate)", change: "changed", flag: true },
+  { aspect: "Secondary accelerator", current: "DBA (dibutylamine)-based", proposed: "Removed", change: "removed", flag: true },
+  { aspect: "Activator", current: "ZnO + stearic acid", proposed: "ZnO + stearic acid", change: "same", flag: false },
+  { aspect: "Antioxidants", current: "BHT, Irganox 1010, Irganox 1076", proposed: "BHT, Irganox 1010 (1076 reduced)", change: "changed", flag: true },
+  { aspect: "Filler", current: "Silica, carbon black", proposed: "Silica, carbon black", change: "same", flag: false },
+  { aspect: "ETFE film barrier", current: "Yes", proposed: "Yes", change: "same", flag: false },
+  { aspect: "Cure profile", current: "165 C / 12 min", proposed: "170 C / 10 min", change: "changed", flag: true },
+];
+
+const CHG_LABEL = { removed: "Removed", added: "Added", changed: "Changed", same: "Unchanged" };
+
+// =================== COMPOUND IMPACT DATA ===================
+const IMPACT = {
+  down: [
+    { name: "NDBA (N-nitroso-di-n-butylamine)", note: "DBA precursor removed; supplier projects greater than 95% reduction. This directly targets the critical finding.", tox: "Removes the cohort-of-concern driver", toxClass: "tox-concern", cite: "CN §4.1" },
+    { name: "ZDBC (zinc dibutyldithiocarbamate)", note: "Replaced by ZBEC; the dibutyl pathway is eliminated.", tox: "Lower nitrosamine-precursor load", toxClass: "tox-neutral", cite: "CN §2, §4.1" },
+    { name: "Irganox 1076", note: "Reduced in the new formulation; modest lowering of antioxidant leachable burden.", tox: "Already below limit; net positive", toxClass: "tox-neutral", cite: "CN §2" },
+  ],
+  up: [
+    { name: "ZBEC and decomposition products", note: "New primary accelerator; its decomposition chemistry must be characterized under the sponsor cure profile.", tox: "New species, no sponsor data", toxClass: "tox-new", cite: "CN §4.2" },
+    { name: "Benzyl alcohol", note: "Expected decomposition product of ZBEC under cure.", tox: "Characterize and assess", toxClass: "tox-new", cite: "CN §4.2" },
+    { name: "Dibenzylamine / NDBzA", note: "Dibenzylamine is a precursor for N-nitroso-dibenzylamine; supplier LOD less than 2 ng/g. NDBzA is NOT in the current 11-compound panel and the hotter cure (170 C) raises formation risk.", tox: "Cohort of concern if formed; UNQUANTIFIED", toxClass: "tox-concern", cite: "CN §4.2" },
+  ],
+  same: [
+    { name: "MBT (2-mercaptobenzothiazole)", note: "Listed as unchanged by supplier, yet it already exceeds the TTC-based AET as an extractable. The classification question (Artifact 2 GAP-06) is unaffected by this change.", tox: "Still classification-sensitive", toxClass: "tox-neutral", cite: "CN §4.3 · ES §5.2" },
+    { name: "BHT, Irganox 1010", note: "Antioxidants projected unchanged; both already below PDE-based limits.", tox: "No concern", toxClass: "tox-neutral", cite: "CN §4.3" },
+    { name: "Zinc (total), bromide ion", note: "Projected unchanged; within applicable thresholds.", tox: "No concern", toxClass: "tox-neutral", cite: "CN §4.3" },
+  ]
+};
+
+// =================== RE-QUALIFICATION ACTIONS ===================
+const ACTIONS = [
+  { title: "Extend and validate the nitrosamine panel for NDBzA", desc: "The current panel does not cover N-nitroso-dibenzylamine. Without this, any evaluation of the new grade is blind to the introduced pathway. Request supplier dibenzylamine residual data in parallel.", owner: "Analytical Sciences", prio: "must", prioLabel: "Must - blocking", cite: "CN §4.2 · GAP-05 · INC-02" },
+  { title: "Comparative extractables study under representative conditions", desc: "Run BR-540F-Eco through the USP <1663> framework used for the current grade; confirm quantified residual NDBA is below 2.2 ng/mL and characterize ZBEC, benzyl alcohol, and NDBzA.", owner: "Analytical Sciences", prio: "must", prioLabel: "Must - blocking", cite: "CN §5(1) · INC-01" },
+  { title: "Assess net nitrosamine risk under the hotter cure profile", desc: "The cure temperature rises from 165 to 170 C. Evaluate formation of NDBzA and any other nitrosamines at the actual sponsor cure conditions, not just supplier benchmark conditions.", owner: "Toxicology + Analytical", prio: "must", prioLabel: "Must - blocking", cite: "CN §2 · RA §3 (inferred)" },
+  { title: "Side-by-side leachables bridging study (min. 12 months)", desc: "Initiate a leachables study on the new grade covering at least one full shelf-life supportive timepoint, to confirm the extractables conclusions translate to the drug product.", owner: "Analytical Sciences", prio: "must", prioLabel: "Must - blocking", cite: "CN §5(3)" },
+  { title: "Re-evaluate the leachables risk assessment", desc: "Update RA-001 with the new-grade data, paying specific attention to dibenzylamine and any nitrosamine derivatives; reconcile with the ICH M7(R2) addendum methodology.", owner: "CMC + Toxicology", prio: "should", prioLabel: "Should", cite: "CN §5(2) · GAP-04" },
+  { title: "Update the dossier and change-control documentation", desc: "Document the change per ICH Q3E (draft) §6 and applicable variation procedures; update the change-control SOP to reference the current guidance framework.", owner: "Regulatory Affairs", prio: "should", prioLabel: "Should", cite: "CN §5(4) · GAP-07" },
+];
+
+// =================== TRANSITION TIMELINE ===================
+const TIMELINE = [
+  { when: "Sep 2025", what: "Change notification received; 90-day evaluation window opens." },
+  { when: "By Dec 2025", what: "Customer response due to supplier (accept / reject the change)." },
+  { when: "Until Mar 2026", what: "Current grade BR-540F still manufactured; bridging inventory reservable on request." },
+  { when: "Q2 2026", what: "Earliest BR-540F-Eco production; thereafter only the new grade is available." },
+];
+
+// =================== RENDER ===================
+const deltaBody = document.getElementById('delta-body');
+const impactCols = document.getElementById('impact-cols');
+const actionsList = document.getElementById('actions-list');
+const timelineStrip = document.getElementById('timeline-strip');
+
+function renderDelta() {
+  deltaBody.innerHTML = DELTA.map(r => `
+    <tr class="${r.flag ? 'row-flag' : ''}">
+      <td class="aspect">${r.aspect}</td>
+      <td class="val-current">${r.current}</td>
+      <td class="val-new">${r.proposed}</td>
+      <td class="chg"><span class="chg-tag chg-${r.change}">${CHG_LABEL[r.change]}</span></td>
+    </tr>
+  `).join('');
+}
+
+function compoundItem(c) {
+  return `
+    <div class="compound-item">
+      <div class="ci-name">${c.name}</div>
+      <div class="ci-note">${c.note}</div>
+      <span class="ci-tox ${c.toxClass}">${c.tox}</span>
+      <span class="ci-cite">${c.cite}</span>
+    </div>`;
+}
+
+function renderImpact() {
+  const col = (cls, arrow, label, items) => `
+    <div class="impact-col ${cls}">
+      <div class="ic-head"><span class="ic-arrow">${arrow}</span> ${label} (${items.length})</div>
+      ${items.map(compoundItem).join('')}
+    </div>`;
+  impactCols.innerHTML =
+    col('down', '&darr;', 'Decreases / removed', IMPACT.down) +
+    col('up', '&uarr;', 'Appears / increases', IMPACT.up) +
+    col('same', '&rarr;', 'Unchanged (per supplier)', IMPACT.same);
+}
+
+function renderActions() {
+  actionsList.innerHTML = ACTIONS.map((a, i) => `
+    <div class="action">
+      <div class="a-num">${String(i + 1).padStart(2, '0')}</div>
+      <div class="a-body">
+        <div class="a-title">${a.title}</div>
+        <div class="a-desc">${a.desc}</div>
+        <span class="a-cite">${a.cite}</span>
+      </div>
+      <div class="a-meta">
+        <div class="a-owner">${a.owner}</div>
+        <span class="a-prio prio-${a.prio}">${a.prioLabel}</span>
+      </div>
+    </div>
+  `).join('');
+}
+
+function renderTimeline() {
+  timelineStrip.innerHTML = TIMELINE.map(t => `
+    <div class="ts-cell">
+      <div class="ts-when">${t.when}</div>
+      <div class="ts-what">${t.what}</div>
+    </div>
+  `).join('');
+}
+
+renderDelta();
+renderImpact();
+renderActions();
+renderTimeline();
+</script>
+</body>
+</html>

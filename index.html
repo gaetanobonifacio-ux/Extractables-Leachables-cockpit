@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NVT-217 - E&L Scientific Copilot Cockpit</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Serif:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg-base:#0a0e16; --bg-elev-1:#11161f; --bg-elev-2:#161c28; --bg-elev-3:#1c2331;
+    --border:#2a3245; --border-strong:#3a4356;
+    --text-primary:#e8e6e0; --text-secondary:#b4b8c5; --text-muted:#6b7184;
+    --accent:#d4a574; --accent-dim:#8a6d4b;
+    --font-display:'IBM Plex Serif', Georgia, serif;
+    --font-body:'IBM Plex Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+    --font-mono:'IBM Plex Mono', 'SF Mono', Menlo, monospace;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  html,body{height:100%;}
+  body{background:var(--bg-base); color:var(--text-primary); font-family:var(--font-body); overflow:hidden;}
+  .app{display:grid; grid-template-columns:268px 1fr; height:100vh;}
+
+  /* ---------- Sidebar ---------- */
+  .sidebar{background:var(--bg-elev-1); border-right:1px solid var(--border); display:flex; flex-direction:column; min-height:0;}
+  .brand{padding:22px 20px 18px; border-bottom:1px solid var(--border);}
+  .brand .kicker{color:var(--accent); font-family:var(--font-mono); font-size:10.5px; letter-spacing:2.5px;}
+  .brand h1{font-family:var(--font-display); font-weight:600; font-size:19px; line-height:1.25; margin-top:8px; color:var(--text-primary);}
+  .brand .case{color:var(--text-muted); font-size:11.5px; margin-top:6px; font-family:var(--font-mono); letter-spacing:.5px;}
+
+  .nav{padding:14px 12px; overflow-y:auto; flex:1; min-height:0;}
+  .nav .sec{color:var(--text-muted); font-family:var(--font-mono); font-size:10px; letter-spacing:2px; padding:6px 8px 10px;}
+  .nav-item{width:100%; text-align:left; background:transparent; border:1px solid transparent; border-radius:8px;
+    color:var(--text-secondary); font-family:var(--font-body); font-size:13.5px; cursor:pointer;
+    display:flex; align-items:center; gap:12px; padding:10px 10px; margin-bottom:4px; transition:background .15s, border-color .15s, color .15s;}
+  .nav-item:hover{background:var(--bg-elev-2); color:var(--text-primary);}
+  .nav-item:focus-visible{outline:2px solid var(--accent); outline-offset:2px;}
+  .nav-item.active{background:var(--bg-elev-3); border-color:var(--border-strong); color:var(--text-primary);}
+  .nav-item .bar{width:3px; height:26px; border-radius:2px; background:var(--clr, var(--accent)); flex:0 0 auto;}
+  .nav-item .num{font-family:var(--font-mono); font-size:11px; color:var(--text-muted); width:18px; flex:0 0 auto;}
+  .nav-item.active .num{color:var(--accent);}
+  .nav-item .lbl{line-height:1.2;}
+
+  .side-foot{border-top:1px solid var(--border); padding:14px 18px 16px;}
+  .caution{display:flex; align-items:center; gap:8px; color:var(--text-secondary); font-size:11px; line-height:1.4;}
+  .caution .dot{width:7px; height:7px; border-radius:50%; background:#f97316; flex:0 0 auto;}
+  .side-foot .cprt{color:var(--text-muted); font-size:10.5px; margin-top:10px; line-height:1.5;}
+  .side-foot .demo{color:var(--accent-dim); font-size:10px; margin-top:6px; font-family:var(--font-mono);}
+
+  /* ---------- Main ---------- */
+  .main{display:flex; flex-direction:column; min-width:0; min-height:0;}
+  .topbar{height:58px; flex:0 0 auto; border-bottom:1px solid var(--border); background:var(--bg-base);
+    display:flex; align-items:center; justify-content:space-between; padding:0 22px;}
+  .crumbs{display:flex; align-items:baseline; gap:12px;}
+  .crumbs .step{font-family:var(--font-mono); font-size:12px; color:var(--accent); letter-spacing:1px;}
+  .crumbs .title{font-family:var(--font-display); font-size:17px; color:var(--text-primary);}
+  .actions{display:flex; align-items:center; gap:14px;}
+  .open-raw{color:var(--text-secondary); font-size:12px; text-decoration:none; font-family:var(--font-mono);
+    border:1px solid var(--border); border-radius:6px; padding:6px 11px; transition:border-color .15s, color .15s;}
+  .open-raw:hover{border-color:var(--accent-dim); color:var(--text-primary);}
+  .open-raw[hidden]{display:none;}
+
+  .content{flex:1; min-height:0; position:relative; background:var(--bg-base);}
+  .view{position:absolute; inset:0;}
+  .view[hidden]{display:none;}
+
+  /* Map / overview */
+  .map-stage{width:100%; height:100%; display:flex; align-items:center; justify-content:center; padding:22px;}
+  .map-stage svg{width:100%; height:100%;}
+  .launch-hit{fill:transparent; cursor:pointer; stroke:transparent; stroke-width:2; transition:stroke .15s, fill .15s;}
+  .launch-hit:hover{stroke:var(--accent); fill:rgba(212,165,116,0.10);}
+  .launch-hit:focus-visible{outline:none; stroke:var(--accent);}
+
+  /* Artifact frame */
+  .frame-stage{width:100%; height:100%; padding:0;}
+  .frame-stage iframe{width:100%; height:100%; border:0; background:var(--bg-base); display:block;}
+
+  @media (max-width: 920px){
+    .app{grid-template-columns:208px 1fr;}
+    .brand h1{font-size:16px;}
+    .nav-item{font-size:12.5px;}
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="kicker">E&amp;L SCIENTIFIC COPILOT</div>
+      <h1>Regulatory Workflow Cockpit</h1>
+      <div class="case">NovaTera NVT-217</div>
+    </div>
+    <nav class="nav" id="nav" aria-label="Workflow steps">
+      <div class="sec">PIPELINE</div>
+      <!-- nav items injected by JS from VIEWS -->
+    </nav>
+    <div class="side-foot">
+      <div class="caution"><span class="dot"></span><span>AI output requires QA / Toxicology review</span></div>
+      <div class="cprt">Prepared by Gaetano Bonifacio PhD, MBA | &copy; 2026</div>
+      <div class="demo">fictional case study</div>
+    </div>
+  </aside>
+
+  <main class="main">
+    <div class="topbar">
+      <div class="crumbs">
+        <span class="step" id="crumbStep">00</span>
+        <span class="title" id="crumbTitle">Overview</span>
+      </div>
+      <div class="actions">
+        <a class="open-raw" id="openRaw" target="_blank" rel="noopener" hidden>open full screen &#8599;</a>
+      </div>
+    </div>
+    <div class="content">
+      <section class="view" id="view-map" aria-label="Workflow map">
+        <div class="map-stage">
+<svg viewBox="0 0 1600 900" xmlns="http://www.w3.org/2000/svg" font-family="'IBM Plex Sans', 'Segoe UI', sans-serif">
+  <defs>
+    <radialGradient id="bgGlow" cx="50%" cy="0%" r="80%">
+      <stop offset="0%" stop-color="#141a26"/>
+      <stop offset="100%" stop-color="#0a0e16"/>
+    </radialGradient>
+    <linearGradient id="accentGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#d4a574"/>
+      <stop offset="100%" stop-color="#e0b886"/>
+    </linearGradient>
+    <linearGradient id="claudeGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1c2331"/>
+      <stop offset="100%" stop-color="#161c28"/>
+    </linearGradient>
+    <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#d4a574"/>
+    </marker>
+    <marker id="arrowDim" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#6b7184"/>
+    </marker>
+    <filter id="softShadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="3" stdDeviation="6" flood-color="#000000" flood-opacity="0.4"/>
+    </filter>
+  </defs>
+
+  <rect width="1600" height="900" fill="url(#bgGlow)"/>
+  <g opacity="0.04" stroke="#ffffff" stroke-width="1">
+    <line x1="0" y1="150" x2="1600" y2="150"/>
+    <line x1="0" y1="300" x2="1600" y2="300"/>
+    <line x1="0" y1="450" x2="1600" y2="450"/>
+    <line x1="0" y1="600" x2="1600" y2="600"/>
+    <line x1="0" y1="750" x2="1600" y2="750"/>
+  </g>
+
+  <text x="80" y="68" fill="#d4a574" font-size="15" font-family="'IBM Plex Mono', monospace" letter-spacing="3">E&amp;L SCIENTIFIC COPILOT  ·  HOW IT WORKS</text>
+  <text x="80" y="112" fill="#e8e6e0" font-size="38" font-weight="600" font-family="'IBM Plex Serif', Georgia, serif">From your documents to defensible deliverables</text>
+  <line x1="80" y1="134" x2="1520" y2="134" stroke="#2a3245" stroke-width="1"/>
+
+  <text x="80" y="186" fill="#6b7184" font-size="13" font-family="'IBM Plex Mono', monospace" letter-spacing="2">INPUTS</text>
+
+  <g filter="url(#softShadow)">
+    <rect x="80" y="206" width="320" height="170" rx="8" fill="#11161f" stroke="#2a3245" stroke-width="1.5"/>
+    <rect x="80" y="206" width="320" height="4" rx="2" fill="#06b6d4"/>
+  </g>
+  <text x="104" y="244" fill="#06b6d4" font-size="13" font-family="'IBM Plex Mono', monospace" letter-spacing="1.5">REFERENCE LIBRARY</text>
+  <text x="104" y="266" fill="#6b7184" font-size="12.5" font-style="italic" font-family="'IBM Plex Serif', serif">slow-changing  ·  load once</text>
+  <text x="104" y="298" fill="#b4b8c5" font-size="14">ICH M7(R2)  ·  Q3D(R2)  ·  Q3E draft</text>
+  <text x="104" y="322" fill="#b4b8c5" font-size="14">USP &lt;661&gt; &lt;1663&gt; &lt;1664&gt; &lt;1665&gt;</text>
+  <text x="104" y="346" fill="#b4b8c5" font-size="14">ISO 10993-17 / -18  ·  TS 21726</text>
+  <text x="104" y="368" fill="#b4b8c5" font-size="14">FDA CCS  ·  EMA plastics  ·  PQRI</text>
+
+  <g filter="url(#softShadow)">
+    <rect x="80" y="406" width="320" height="170" rx="8" fill="#11161f" stroke="#2a3245" stroke-width="1.5"/>
+    <rect x="80" y="406" width="320" height="4" rx="2" fill="#d4a574"/>
+  </g>
+  <text x="104" y="444" fill="#d4a574" font-size="13" font-family="'IBM Plex Mono', monospace" letter-spacing="1.5">PRODUCT DATA</text>
+  <text x="104" y="466" fill="#6b7184" font-size="12.5" font-style="italic" font-family="'IBM Plex Serif', serif">fast-changing  ·  per assessment</text>
+  <text x="104" y="498" fill="#b4b8c5" font-size="14">Extractables study report</text>
+  <text x="104" y="522" fill="#b4b8c5" font-size="14">Leachables stability data</text>
+  <text x="104" y="546" fill="#b4b8c5" font-size="14">CCS description  ·  supplier docs</text>
+  <text x="104" y="568" fill="#b4b8c5" font-size="14">Internal risk assessment</text>
+
+  <text x="500" y="186" fill="#6b7184" font-size="13" font-family="'IBM Plex Mono', monospace" letter-spacing="2">PROJECT KNOWLEDGE</text>
+  <g filter="url(#softShadow)">
+    <rect x="500" y="240" width="250" height="300" rx="8" fill="#161c28" stroke="#3a4356" stroke-width="1.5"/>
+  </g>
+  <g transform="translate(595,290)">
+    <path d="M 0 8 Q 0 0 8 0 L 24 0 L 32 10 L 52 10 Q 60 10 60 18 L 60 56 Q 60 64 52 64 L 8 64 Q 0 64 0 56 Z" fill="#1c2331" stroke="#d4a574" stroke-width="2"/>
+  </g>
+  <text x="625" y="392" fill="#e8e6e0" font-size="17" font-weight="600" text-anchor="middle">Claude Project</text>
+  <text x="625" y="416" fill="#b4b8c5" font-size="13" text-anchor="middle">Knowledge Base</text>
+  <text x="625" y="452" fill="#6b7184" font-size="12.5" text-anchor="middle" font-family="'IBM Plex Mono', monospace">RAG retrieval</text>
+  <text x="625" y="474" fill="#6b7184" font-size="12.5" text-anchor="middle" font-family="'IBM Plex Mono', monospace">+ custom instructions</text>
+  <text x="625" y="496" fill="#6b7184" font-size="12.5" text-anchor="middle" font-family="'IBM Plex Mono', monospace">+ persistent context</text>
+
+  <path d="M 400 291 C 445 291, 460 360, 498 370" fill="none" stroke="#6b7184" stroke-width="2" marker-end="url(#arrow)"/>
+  <path d="M 400 491 C 445 491, 460 420, 498 410" fill="none" stroke="#6b7184" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <text x="850" y="186" fill="#6b7184" font-size="13" font-family="'IBM Plex Mono', monospace" letter-spacing="2">SYNTHESIS ENGINE</text>
+  <g filter="url(#softShadow)">
+    <rect x="850" y="240" width="300" height="300" rx="8" fill="url(#claudeGrad)" stroke="#d4a574" stroke-width="2"/>
+  </g>
+  <text x="1000" y="284" fill="#d4a574" font-size="20" font-weight="600" text-anchor="middle" font-family="'IBM Plex Serif', serif">Claude</text>
+  <text x="1000" y="308" fill="#6b7184" font-size="12" text-anchor="middle" font-family="'IBM Plex Mono', monospace" letter-spacing="1">GUARDRAILS APPLIED</text>
+  <line x1="884" y1="324" x2="1116" y2="324" stroke="#2a3245" stroke-width="1"/>
+
+  <circle cx="892" cy="350" r="3" fill="#10b981"/>
+  <text x="906" y="355" fill="#b4b8c5" font-size="13.5">Evidence taxonomy: Confirmed /</text>
+  <text x="906" y="374" fill="#6b7184" font-size="13.5">Supported / Inferred / Speculative</text>
+
+  <circle cx="892" cy="402" r="3" fill="#10b981"/>
+  <text x="906" y="407" fill="#b4b8c5" font-size="13.5">Transparent AET / PDE math</text>
+
+  <circle cx="892" cy="432" r="3" fill="#10b981"/>
+  <text x="906" y="437" fill="#b4b8c5" font-size="13.5">Source citation on every claim</text>
+
+  <circle cx="892" cy="462" r="3" fill="#10b981"/>
+  <text x="906" y="467" fill="#b4b8c5" font-size="13.5">Uncertainty + gaps flagged</text>
+
+  <circle cx="892" cy="492" r="3" fill="#f97316"/>
+  <text x="906" y="497" fill="#b4b8c5" font-size="13.5">No autonomous regulatory</text>
+  <text x="906" y="516" fill="#6b7184" font-size="13.5">decisions  ·  QA review required</text>
+
+  <path d="M 750 390 C 790 390, 805 390, 848 390" fill="none" stroke="#d4a574" stroke-width="2.5" marker-end="url(#arrow)"/>
+
+  <text x="1250" y="186" fill="#6b7184" font-size="13" font-family="'IBM Plex Mono', monospace" letter-spacing="2">DELIVERABLES</text>
+
+  <g font-size="13.5">
+    <g filter="url(#softShadow)">
+      <rect x="1250" y="210" width="270" height="54" rx="6" fill="#11161f" stroke="#2a3245" stroke-width="1.5"/>
+    </g>
+    <rect x="1250" y="210" width="4" height="54" rx="2" fill="#ef4444"/>
+    <text x="1272" y="234" fill="#6b7184" font-size="11" font-family="'IBM Plex Mono', monospace">01</text>
+    <text x="1272" y="252" fill="#e8e6e0" font-size="14">E&amp;L Risk Register</text>
+
+    <g filter="url(#softShadow)">
+      <rect x="1250" y="274" width="270" height="54" rx="6" fill="#11161f" stroke="#2a3245" stroke-width="1.5"/>
+    </g>
+    <rect x="1250" y="274" width="4" height="54" rx="2" fill="#f97316"/>
+    <text x="1272" y="298" fill="#6b7184" font-size="11" font-family="'IBM Plex Mono', monospace">02</text>
+    <text x="1272" y="316" fill="#e8e6e0" font-size="14">Regulatory Gap Assessment</text>
+
+    <g filter="url(#softShadow)">
+      <rect x="1250" y="338" width="270" height="54" rx="6" fill="#11161f" stroke="#2a3245" stroke-width="1.5"/>
+    </g>
+    <rect x="1250" y="338" width="4" height="54" rx="2" fill="#eab308"/>
+    <text x="1272" y="362" fill="#6b7184" font-size="11" font-family="'IBM Plex Mono', monospace">03</text>
+    <text x="1272" y="380" fill="#e8e6e0" font-size="13">Risk Summary + Decision Brief</text>
+
+    <g filter="url(#softShadow)">
+      <rect x="1250" y="402" width="270" height="54" rx="6" fill="#11161f" stroke="#2a3245" stroke-width="1.5"/>
+    </g>
+    <rect x="1250" y="402" width="4" height="54" rx="2" fill="#06b6d4"/>
+    <text x="1272" y="426" fill="#6b7184" font-size="11" font-family="'IBM Plex Mono', monospace">04</text>
+    <text x="1272" y="444" fill="#e8e6e0" font-size="14">Supplier Change Impact</text>
+
+    <g filter="url(#softShadow)">
+      <rect x="1250" y="466" width="270" height="54" rx="6" fill="#11161f" stroke="#2a3245" stroke-width="1.5"/>
+    </g>
+    <rect x="1250" y="466" width="4" height="54" rx="2" fill="#10b981"/>
+    <text x="1272" y="490" fill="#6b7184" font-size="11" font-family="'IBM Plex Mono', monospace">05</text>
+    <text x="1272" y="508" fill="#e8e6e0" font-size="14">Regulatory Readiness + .docx</text>
+  </g>
+
+  <path d="M 1150 390 C 1190 390, 1205 365, 1248 360" fill="none" stroke="#d4a574" stroke-width="2.5" marker-end="url(#arrow)"/>
+
+  <path d="M 1385 524 C 1385 660, 240 660, 240 580" fill="none" stroke="#6b7184" stroke-width="1.8" stroke-dasharray="6 5" marker-end="url(#arrowDim)"/>
+  <text x="812" y="652" fill="#6b7184" font-size="13" font-style="italic" font-family="'IBM Plex Serif', serif" text-anchor="middle">re-run when data changes: new timepoint, supplier change, new lot  ·  artifact updates, logic stays fixed</text>
+
+  <g filter="url(#softShadow)">
+    <rect x="80" y="700" width="1440" height="120" rx="8" fill="#11161f" stroke="#2a3245" stroke-width="1.5"/>
+    <rect x="80" y="700" width="6" height="120" rx="3" fill="url(#accentGrad)"/>
+  </g>
+  <text x="112" y="734" fill="#d4a574" font-size="13" font-family="'IBM Plex Mono', monospace" letter-spacing="2">DATA GOVERNANCE LAYER</text>
+
+  <text x="112" y="766" fill="#e8e6e0" font-size="15" font-weight="600">Published standards</text>
+  <text x="112" y="788" fill="#b4b8c5" font-size="13.5">ISO / ICH / USP / FDA / EMA</text>
+  <text x="112" y="808" fill="#6b7184" font-size="12.5">No confidentiality concern  ·  any plan</text>
+
+  <line x1="470" y1="724" x2="470" y2="800" stroke="#2a3245" stroke-width="1"/>
+
+  <text x="500" y="766" fill="#e8e6e0" font-size="15" font-weight="600">Confidential company data</text>
+  <text x="500" y="788" fill="#b4b8c5" font-size="13.5">Formulations, suppliers, unpublished results</text>
+  <text x="500" y="808" fill="#6b7184" font-size="12.5">Use Team / Enterprise  ·  not used for training by default</text>
+
+  <line x1="1010" y1="724" x2="1010" y2="800" stroke="#2a3245" stroke-width="1"/>
+
+  <text x="1040" y="766" fill="#e8e6e0" font-size="15" font-weight="600">Enterprise controls</text>
+  <text x="1040" y="788" fill="#b4b8c5" font-size="13.5">SSO  ·  audit logs  ·  SCIM</text>
+  <text x="1040" y="808" fill="#6b7184" font-size="12.5">Custom retention  ·  role-based permissions</text>
+
+  <text x="80" y="864" fill="#6b7184" font-size="12" font-family="'IBM Plex Mono', monospace">NovaTera NVT-217 demo  ·  fictional case study</text>
+  <text x="1520" y="864" fill="#d4a574" font-size="12" font-family="'IBM Plex Mono', monospace" text-anchor="end" letter-spacing="1">AI output requires QA / Toxicology review</text>
+
+  <g class="launch-layer">
+    <rect class="launch-hit" data-target="risk"      x="1250" y="210" width="270" height="54" rx="6"/>
+    <rect class="launch-hit" data-target="gap"       x="1250" y="274" width="270" height="54" rx="6"/>
+    <rect class="launch-hit" data-target="brief"     x="1250" y="338" width="270" height="54" rx="6"/>
+    <rect class="launch-hit" data-target="supplier"  x="1250" y="402" width="270" height="54" rx="6"/>
+    <rect class="launch-hit" data-target="readiness" x="1250" y="466" width="270" height="54" rx="6"/>
+    <text x="1250" y="556" fill="#d4a574" font-size="12.5" font-family="'IBM Plex Mono', monospace" letter-spacing="1">&#9656; click a deliverable to open</text>
+  </g>
+</svg>
+        </div>
+      </section>
+      <section class="view" id="view-frame" hidden aria-label="Artifact">
+        <div class="frame-stage">
+          <iframe id="frame" title="E&amp;L artifact" referrerpolicy="no-referrer"></iframe>
+        </div>
+      </section>
+    </div>
+  </main>
+</div>
+
+<script>
+  // Single source of truth. Adding/renaming an artifact = edit one row here.
+  var VIEWS = [
+    {id:'overview',  num:'00', label:'Overview',                       file:null,                            color:'var(--accent)'},
+    {id:'risk',      num:'01', label:'E&L Risk Register',              file:'artifact1_risk_register.html',  color:'#ef4444'},
+    {id:'gap',       num:'02', label:'Regulatory Gap Assessment',      file:'artifact2_gap_assessment.html', color:'#f97316'},
+    {id:'brief',     num:'03', label:'Risk Summary + Decision Brief',  file:'artifact3_decision_brief.html', color:'#eab308'},
+    {id:'supplier',  num:'04', label:'Supplier Change Impact',         file:'artifact4_supplier_change.html',color:'#06b6d4'},
+    {id:'readiness', num:'05', label:'Regulatory Readiness',           file:'artifact5_readiness.html',      color:'#10b981'}
+  ];
+  var byId = {};
+  VIEWS.forEach(function(v){ byId[v.id] = v; });
+
+  var nav = document.getElementById('nav');
+  var frame = document.getElementById('frame');
+  var viewMap = document.getElementById('view-map');
+  var viewFrame = document.getElementById('view-frame');
+  var crumbStep = document.getElementById('crumbStep');
+  var crumbTitle = document.getElementById('crumbTitle');
+  var openRaw = document.getElementById('openRaw');
+
+  // Build sidebar nav from VIEWS
+  VIEWS.forEach(function(v){
+    var b = document.createElement('button');
+    b.className = 'nav-item';
+    b.type = 'button';
+    b.setAttribute('data-target', v.id);
+    b.style.setProperty('--clr', v.color);
+    b.innerHTML = '<span class="bar"></span><span class="num">'+v.num+'</span><span class="lbl">'+v.label+'</span>';
+    b.addEventListener('click', function(){ go(v.id); });
+    nav.appendChild(b);
+  });
+
+  function setActiveNav(id){
+    var items = nav.querySelectorAll('.nav-item');
+    items.forEach(function(it){
+      it.classList.toggle('active', it.getAttribute('data-target') === id);
+    });
+  }
+
+  function showView(id){
+    var v = byId[id];
+    if(!v){ v = byId['overview']; id = 'overview'; }   // guardrail: unknown id falls back to overview
+    setActiveNav(id);
+    crumbStep.textContent = v.num;
+    crumbTitle.textContent = v.label;
+    if(v.file){
+      if(frame.getAttribute('src') !== v.file){ frame.setAttribute('src', v.file); }
+      openRaw.href = v.file; openRaw.hidden = false;
+      viewMap.hidden = true; viewFrame.hidden = false;
+    } else {
+      frame.removeAttribute('src');
+      openRaw.hidden = true; openRaw.removeAttribute('href');
+      viewFrame.hidden = true; viewMap.hidden = false;
+    }
+  }
+
+  function go(id){
+    if(!byId[id]) id = 'overview';
+    if(('#'+id) !== location.hash){ location.hash = id; }   // hashchange handler does the work
+    else { showView(id); }
+  }
+
+  // Clickable workflow-map overlays
+  viewMap.addEventListener('click', function(e){
+    var t = e.target.closest('[data-target]');
+    if(t){ go(t.getAttribute('data-target')); }
+  });
+
+  // Deep-linking + browser back/forward
+  function fromHash(){
+    var id = (location.hash || '').replace('#','');
+    showView(byId[id] ? id : 'overview');
+  }
+  window.addEventListener('hashchange', fromHash);
+  fromHash();
+</script>
+</body>
+</html>

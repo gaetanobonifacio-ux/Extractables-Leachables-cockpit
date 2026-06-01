@@ -1,0 +1,18 @@
+# === Third-party copyrighted standards - NEVER commit ===
+# ISO, USP, ICH, PQRI, FDA/EMA documents are licensed and cannot be redistributed.
+*.pdf
+*.docx
+*.doc
+*.xlsx
+
+# Internal-only demo materials (not for public display)
+demo_run_sheet.html
+*run_sheet*
+*run-sheet*
+
+# OS / editor cruft
+.DS_Store
+Thumbs.db
+*.swp
+.idea/
+.vscode/

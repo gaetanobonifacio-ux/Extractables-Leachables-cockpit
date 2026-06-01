@@ -1,0 +1,853 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NVT-217 - E&L Risk Register</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Serif:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg-base: #0a0e16;
+    --bg-elev-1: #11161f;
+    --bg-elev-2: #161c28;
+    --bg-elev-3: #1c2331;
+    --border: #2a3245;
+    --border-strong: #3a4356;
+    --text-primary: #e8e6e0;
+    --text-secondary: #b4b8c5;
+    --text-muted: #6b7184;
+    --accent: #d4a574;          /* warm gold - the editorial accent */
+    --accent-dim: #8a6d4b;
+    --critical: #ef4444;
+    --critical-dim: #7f1d1d;
+    --critical-bg: rgba(239, 68, 68, 0.08);
+    --high: #f97316;
+    --high-dim: #7c2d12;
+    --high-bg: rgba(249, 115, 22, 0.08);
+    --medium: #eab308;
+    --medium-dim: #713f12;
+    --medium-bg: rgba(234, 179, 8, 0.08);
+    --low: #10b981;
+    --low-dim: #064e3b;
+    --low-bg: rgba(16, 185, 129, 0.08);
+    --info: #06b6d4;
+    --info-bg: rgba(6, 182, 212, 0.08);
+    --font-display: 'IBM Plex Serif', Georgia, serif;
+    --font-body: 'IBM Plex Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+    --font-mono: 'IBM Plex Mono', 'SF Mono', Menlo, monospace;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body {
+    background: var(--bg-base);
+    color: var(--text-primary);
+    font-family: var(--font-body);
+    font-size: 14px;
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+    min-height: 100vh;
+  }
+  body {
+    background-image:
+      radial-gradient(ellipse at top, rgba(212, 165, 116, 0.04) 0%, transparent 50%),
+      radial-gradient(ellipse at bottom right, rgba(6, 182, 212, 0.03) 0%, transparent 60%);
+    background-attachment: fixed;
+  }
+  .grid-overlay {
+    position: fixed; inset: 0;
+    background-image:
+      linear-gradient(rgba(255,255,255,0.012) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,0.012) 1px, transparent 1px);
+    background-size: 48px 48px;
+    pointer-events: none; z-index: 0;
+  }
+  .container {
+    position: relative; z-index: 1;
+    max-width: 1280px; margin: 0 auto;
+    padding: 32px 28px 64px;
+  }
+
+  /* ============ HEADER ============ */
+  header.masthead {
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+    padding: 24px 0;
+    display: grid; grid-template-columns: 1fr auto; gap: 24px;
+    align-items: end; margin-bottom: 32px;
+  }
+  .masthead .eyebrow {
+    font-family: var(--font-mono);
+    font-size: 10px; letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--accent); font-weight: 500;
+    margin-bottom: 8px;
+  }
+  .masthead h1 {
+    font-family: var(--font-display);
+    font-weight: 600; font-size: 36px;
+    line-height: 1.15; color: var(--text-primary);
+    margin-bottom: 4px; letter-spacing: -0.01em;
+  }
+  .masthead .subtitle {
+    font-family: var(--font-display); font-style: italic;
+    color: var(--text-secondary); font-size: 16px;
+  }
+  .meta-panel {
+    text-align: right; font-family: var(--font-mono); font-size: 11px;
+    color: var(--text-muted); line-height: 1.8;
+  }
+  .meta-panel .label { color: var(--text-muted); }
+  .meta-panel .value { color: var(--text-secondary); }
+  .ai-tag {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: var(--bg-elev-2); border: 1px solid var(--border);
+    padding: 4px 10px; border-radius: 4px;
+    font-family: var(--font-mono); font-size: 10px;
+    color: var(--accent); margin-top: 6px;
+  }
+  .ai-tag::before {
+    content: ''; width: 6px; height: 6px; border-radius: 50%;
+    background: var(--accent); display: inline-block;
+    box-shadow: 0 0 8px var(--accent);
+  }
+
+  /* ============ KPI STRIP ============ */
+  .kpi-strip {
+    display: grid; grid-template-columns: repeat(5, 1fr);
+    gap: 1px; background: var(--border);
+    border: 1px solid var(--border); margin-bottom: 32px;
+  }
+  .kpi {
+    background: var(--bg-elev-1); padding: 20px 20px 18px;
+    position: relative;
+  }
+  .kpi .num {
+    font-family: var(--font-display); font-size: 38px; font-weight: 600;
+    line-height: 1; margin-bottom: 8px;
+  }
+  .kpi .lbl {
+    font-family: var(--font-mono); font-size: 10px;
+    letter-spacing: 0.12em; text-transform: uppercase;
+    color: var(--text-muted);
+  }
+  .kpi.critical .num { color: var(--critical); }
+  .kpi.high .num { color: var(--high); }
+  .kpi.medium .num { color: var(--medium); }
+  .kpi.low .num { color: var(--low); }
+  .kpi.info .num { color: var(--info); }
+  .kpi .bar {
+    position: absolute; top: 0; left: 0; height: 2px; width: 30%;
+  }
+  .kpi.critical .bar { background: var(--critical); }
+  .kpi.high .bar { background: var(--high); }
+  .kpi.medium .bar { background: var(--medium); }
+  .kpi.low .bar { background: var(--low); }
+  .kpi.info .bar { background: var(--info); }
+
+  /* ============ METHODOLOGY ============ */
+  .methodology {
+    background: var(--bg-elev-1); border: 1px solid var(--border);
+    border-left: 3px solid var(--accent);
+    padding: 20px 24px; margin-bottom: 28px;
+  }
+  .methodology h3 {
+    font-family: var(--font-mono); font-size: 11px;
+    letter-spacing: 0.18em; text-transform: uppercase;
+    color: var(--accent); font-weight: 600; margin-bottom: 14px;
+  }
+  .method-grid {
+    display: grid; grid-template-columns: repeat(4, 1fr); gap: 24px;
+  }
+  .method-grid > div .ml {
+    font-size: 11px; color: var(--text-muted);
+    font-family: var(--font-mono); letter-spacing: 0.04em;
+    margin-bottom: 4px;
+  }
+  .method-grid > div .mv {
+    font-family: var(--font-mono); font-size: 14px;
+    color: var(--text-primary); font-weight: 500;
+  }
+  .method-grid > div .mv .formula {
+    color: var(--accent); font-size: 12px; margin-left: 6px;
+  }
+
+  /* ============ FILTER BAR ============ */
+  .filter-bar {
+    display: flex; gap: 8px; align-items: center;
+    margin-bottom: 16px; flex-wrap: wrap;
+  }
+  .filter-bar .label {
+    font-family: var(--font-mono); font-size: 10px;
+    letter-spacing: 0.15em; text-transform: uppercase;
+    color: var(--text-muted); margin-right: 4px;
+  }
+  .pill {
+    background: var(--bg-elev-1); border: 1px solid var(--border);
+    color: var(--text-secondary);
+    padding: 6px 12px; font-size: 12px;
+    font-family: var(--font-mono); font-weight: 500;
+    cursor: pointer; transition: all 0.15s ease;
+    border-radius: 3px; letter-spacing: 0.03em;
+  }
+  .pill:hover { border-color: var(--border-strong); color: var(--text-primary); }
+  .pill.active { border-color: var(--accent); color: var(--accent); background: rgba(212, 165, 116, 0.06); }
+  .pill .count {
+    margin-left: 6px; opacity: 0.6; font-size: 10px;
+  }
+
+  /* ============ MAIN TABLE ============ */
+  .table-wrapper {
+    border: 1px solid var(--border); background: var(--bg-elev-1);
+    overflow: hidden;
+  }
+  table.register {
+    width: 100%; border-collapse: collapse;
+    font-size: 13px;
+  }
+  .register thead th {
+    background: var(--bg-elev-2);
+    text-align: left; padding: 12px 14px;
+    font-family: var(--font-mono); font-size: 10px;
+    letter-spacing: 0.1em; text-transform: uppercase;
+    color: var(--text-muted); font-weight: 600;
+    border-bottom: 1px solid var(--border);
+    white-space: nowrap; cursor: pointer; user-select: none;
+  }
+  .register thead th:hover { color: var(--accent); }
+  .register thead th.sort-asc::after  { content: ' ▲'; color: var(--accent); }
+  .register thead th.sort-desc::after { content: ' ▼'; color: var(--accent); }
+  .register tbody tr {
+    border-bottom: 1px solid var(--border);
+    cursor: pointer;
+    transition: background 0.12s ease;
+  }
+  .register tbody tr:hover { background: var(--bg-elev-2); }
+  .register tbody tr.expanded { background: var(--bg-elev-2); }
+  .register tbody td {
+    padding: 14px 14px; vertical-align: top;
+    color: var(--text-secondary);
+  }
+  .register .id-cell {
+    font-family: var(--font-mono); font-size: 11px;
+    color: var(--text-muted); font-weight: 600;
+  }
+  .register .compound {
+    color: var(--text-primary); font-weight: 500;
+  }
+  .register .compound-cas {
+    display: block; font-family: var(--font-mono); font-size: 10px;
+    color: var(--text-muted); margin-top: 2px;
+  }
+  .register .num-cell {
+    font-family: var(--font-mono); font-size: 13px;
+    color: var(--text-primary); font-weight: 500;
+    text-align: right; white-space: nowrap;
+  }
+  .register .num-cell .unit { color: var(--text-muted); font-size: 10px; margin-left: 3px; }
+  .register .num-cell.over { color: var(--critical); }
+  .register .num-cell.warn { color: var(--high); }
+
+  .badge {
+    display: inline-block; padding: 3px 8px;
+    font-family: var(--font-mono); font-size: 10px;
+    font-weight: 600; letter-spacing: 0.08em;
+    border-radius: 2px; text-transform: uppercase;
+    border: 1px solid;
+  }
+  .badge.critical { color: var(--critical); border-color: var(--critical); background: var(--critical-bg); }
+  .badge.high     { color: var(--high);     border-color: var(--high);     background: var(--high-bg); }
+  .badge.medium   { color: var(--medium);   border-color: var(--medium);   background: var(--medium-bg); }
+  .badge.low      { color: var(--low);      border-color: var(--low);      background: var(--low-bg); }
+  .badge.info     { color: var(--info);     border-color: var(--info);     background: var(--info-bg); }
+
+  /* ============ DETAIL EXPAND ============ */
+  tr.detail-row { display: none; }
+  tr.detail-row.open { display: table-row; }
+  tr.detail-row td {
+    background: var(--bg-elev-2);
+    padding: 20px 24px 24px;
+    border-bottom: 1px solid var(--border);
+    border-top: 1px solid var(--border-strong);
+  }
+  .detail-grid {
+    display: grid; grid-template-columns: 1.2fr 1fr 1fr; gap: 24px;
+  }
+  .detail-block h4 {
+    font-family: var(--font-mono); font-size: 10px;
+    letter-spacing: 0.15em; text-transform: uppercase;
+    color: var(--accent); font-weight: 600;
+    margin-bottom: 8px; padding-bottom: 6px;
+    border-bottom: 1px solid var(--border);
+  }
+  .detail-block p {
+    color: var(--text-secondary); font-size: 12.5px;
+    line-height: 1.6;
+  }
+  .detail-block .kv {
+    display: flex; justify-content: space-between;
+    padding: 4px 0; font-size: 12px;
+    border-bottom: 1px dashed var(--border);
+  }
+  .detail-block .kv:last-child { border-bottom: none; }
+  .detail-block .kv .k { color: var(--text-muted); font-family: var(--font-mono); font-size: 11px; }
+  .detail-block .kv .v { color: var(--text-primary); font-weight: 500; text-align: right; }
+  .citations { margin-top: 4px; }
+  .citation-chip {
+    display: inline-block; margin: 4px 4px 0 0;
+    font-family: var(--font-mono); font-size: 11px;
+    color: var(--text-secondary);
+    background: var(--bg-elev-3); border: 1px solid var(--border);
+    padding: 3px 8px; border-radius: 2px;
+  }
+  .citation-chip .doc { color: var(--accent); margin-right: 4px; }
+  .evidence-tax {
+    display: inline-block; padding: 2px 6px;
+    font-family: var(--font-mono); font-size: 10px;
+    font-weight: 600; letter-spacing: 0.08em;
+    border-radius: 2px;
+  }
+  .ev-CONFIRMED   { color: var(--low);    background: var(--low-bg); }
+  .ev-SUPPORTED   { color: var(--info);   background: var(--info-bg); }
+  .ev-INFERRED    { color: var(--medium); background: var(--medium-bg); }
+  .ev-SPECULATIVE { color: var(--high);   background: var(--high-bg); }
+
+  /* ============ LEGEND FOOTER ============ */
+  .legend {
+    margin-top: 32px; padding: 24px;
+    background: var(--bg-elev-1); border: 1px solid var(--border);
+    display: grid; grid-template-columns: 1fr 1fr; gap: 28px;
+  }
+  .legend h4 {
+    font-family: var(--font-mono); font-size: 10px;
+    letter-spacing: 0.18em; text-transform: uppercase;
+    color: var(--accent); font-weight: 600; margin-bottom: 12px;
+  }
+  .legend .doc-row, .legend .ev-row {
+    font-family: var(--font-mono); font-size: 11px;
+    color: var(--text-secondary); padding: 4px 0;
+    border-bottom: 1px dashed var(--border);
+  }
+  .legend .doc-row .doc { color: var(--accent); font-weight: 600; }
+
+  /* ============ FOOTER ============ */
+  .doc-footer {
+    margin-top: 32px; padding-top: 20px;
+    border-top: 1px solid var(--border);
+    display: flex; justify-content: space-between; align-items: center;
+    font-family: var(--font-mono); font-size: 11px;
+    color: var(--text-muted);
+  }
+  .doc-footer .signature {
+    color: var(--text-secondary);
+  }
+  .doc-footer .confidential {
+    color: var(--accent); letter-spacing: 0.1em;
+  }
+
+  /* responsiveness */
+  @media (max-width: 980px) {
+    .kpi-strip { grid-template-columns: repeat(2, 1fr); }
+    .method-grid { grid-template-columns: repeat(2, 1fr); }
+    .detail-grid { grid-template-columns: 1fr; }
+    .legend { grid-template-columns: 1fr; }
+    .register thead th, .register tbody td { padding: 10px 8px; font-size: 12px; }
+  }
+</style>
+</head>
+<body>
+<div class="grid-overlay"></div>
+<div class="container">
+
+  <header class="masthead">
+    <div>
+      <div class="eyebrow">Artifact 01  ·  Extractables &amp; Leachables  ·  QA / RA Workflow</div>
+      <h1>E&amp;L Risk Register</h1>
+      <div class="subtitle">NVT-217 (tenelizumab) - Primary Container Closure System</div>
+    </div>
+    <div class="meta-panel">
+      <div><span class="label">Sponsor</span>  <span class="value">NovaTera Biologics AG</span></div>
+      <div><span class="label">Product</span>  <span class="value">NVT-217 100 mg/mL i.v.</span></div>
+      <div><span class="label">Reg. dossier</span>  <span class="value">BLA prep</span></div>
+      <div><span class="label">Cut-off</span>  <span class="value">31 Jan 2026 (LS 24M data)</span></div>
+      <div class="ai-tag">AI-assisted synthesis  ·  cite sources</div>
+    </div>
+  </header>
+
+  <!-- KPI STRIP -->
+  <div class="kpi-strip">
+    <div class="kpi critical"><span class="bar"></span><div class="num" id="kpi-crit">1</div><div class="lbl">Critical findings</div></div>
+    <div class="kpi high"><span class="bar"></span><div class="num" id="kpi-high">1</div><div class="lbl">Actionable findings</div></div>
+    <div class="kpi medium"><span class="bar"></span><div class="num" id="kpi-med">3</div><div class="lbl">Medium-priority</div></div>
+    <div class="kpi low"><span class="bar"></span><div class="num" id="kpi-low">10</div><div class="lbl">Acceptable / monitored</div></div>
+    <div class="kpi info"><span class="bar"></span><div class="num" id="kpi-tot">15</div><div class="lbl">Total compounds tracked</div></div>
+  </div>
+
+  <!-- METHODOLOGY -->
+  <div class="methodology">
+    <h3>AET / Reporting threshold derivation - shown transparently</h3>
+    <div class="method-grid">
+      <div>
+        <div class="ml">TTC selected</div>
+        <div class="mv">10 µg/day <span class="formula">ICH M7, >1 mo to ≤10 y, oncology</span></div>
+      </div>
+      <div>
+        <div class="ml">Daily dose volume (worst case)</div>
+        <div class="mv">12 mL/day <span class="formula">single-administration basis</span></div>
+      </div>
+      <div>
+        <div class="ml">TTC-based AET</div>
+        <div class="mv">0.83 µg/mL <span class="formula">= 10 / 12</span></div>
+      </div>
+      <div>
+        <div class="ml">Reporting threshold (SCT)</div>
+        <div class="mv">0.42 µg/mL <span class="formula">× 0.5 RF uncertainty</span></div>
+      </div>
+      <div>
+        <div class="ml">NDBA - compound-specific AI</div>
+        <div class="mv">26.5 ng/day <span class="formula">industry-applied, M7(R2) addendum</span></div>
+      </div>
+      <div>
+        <div class="ml">NDBA limit in DP</div>
+        <div class="mv">2.2 ng/mL <span class="formula">= 26.5 / 12</span></div>
+      </div>
+      <div>
+        <div class="ml">Identification tiers</div>
+        <div class="mv">Std / Library / Tentative <span class="formula">USP &lt;1663&gt; framework</span></div>
+      </div>
+      <div>
+        <div class="ml">Evidence taxonomy</div>
+        <div class="mv">Confirmed / Supported / Inferred / Speculative</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- FILTERS -->
+  <div class="filter-bar">
+    <span class="label">Filter risk:</span>
+    <button class="pill active" data-filter="all">All <span class="count" id="cnt-all"></span></button>
+    <button class="pill" data-filter="CRITICAL">Critical <span class="count" id="cnt-CRITICAL"></span></button>
+    <button class="pill" data-filter="HIGH">High <span class="count" id="cnt-HIGH"></span></button>
+    <button class="pill" data-filter="MEDIUM">Medium <span class="count" id="cnt-MEDIUM"></span></button>
+    <button class="pill" data-filter="LOW">Low <span class="count" id="cnt-LOW"></span></button>
+  </div>
+
+  <!-- MAIN TABLE -->
+  <div class="table-wrapper">
+    <table class="register" id="register">
+      <thead>
+        <tr>
+          <th data-sort="id">ID</th>
+          <th data-sort="compound">Compound</th>
+          <th data-sort="source">Source material</th>
+          <th data-sort="method">Method</th>
+          <th data-sort="extr" style="text-align:right">Extr. (µg/mL)</th>
+          <th data-sort="leach" style="text-align:right">Leach. 24M (µg/mL)</th>
+          <th data-sort="limit" style="text-align:right">Limit</th>
+          <th data-sort="risk">Risk</th>
+        </tr>
+      </thead>
+      <tbody id="register-body"></tbody>
+    </table>
+  </div>
+
+  <!-- LEGEND -->
+  <div class="legend">
+    <div>
+      <h4>Source documents - traceability</h4>
+      <div class="doc-row"><span class="doc">NVT-217-DPS-001</span> v3.2  ·  Drug Product Specification (15 Mar 2025)</div>
+      <div class="doc-row"><span class="doc">NVT-217-CCS-001</span> v2.0  ·  Container Closure System Description (20 Jan 2025)</div>
+      <div class="doc-row"><span class="doc">NVT-217-ES-001</span> v1.1  ·  Extractables Study Report (28 Feb 2025)</div>
+      <div class="doc-row"><span class="doc">NVT-217-LS-002</span> v1.0  ·  Leachables Stability Study, 24M interim (10 Jan 2026)</div>
+      <div class="doc-row"><span class="doc">NVT-217-RA-001</span> v2.0  ·  Internal E&amp;L Risk Assessment (15 Feb 2026)</div>
+      <div class="doc-row"><span class="doc">ESM-CN-2025-014</span>  ·  Supplier Change Notification (08 Sep 2025)</div>
+    </div>
+    <div>
+      <h4>Evidence taxonomy &amp; confidence</h4>
+      <div class="ev-row"><span class="evidence-tax ev-CONFIRMED">CONFIRMED</span>  Verified against reference standard or independent method</div>
+      <div class="ev-row"><span class="evidence-tax ev-SUPPORTED">SUPPORTED</span>  Library match plus accurate mass; multiple consistent data points</div>
+      <div class="ev-row"><span class="evidence-tax ev-INFERRED">INFERRED</span>  Reasoned from material composition or guidance; not directly measured</div>
+      <div class="ev-row"><span class="evidence-tax ev-SPECULATIVE">SPECULATIVE</span>  Tentative ID, no standard, low confidence; flag for follow-up</div>
+    </div>
+  </div>
+
+  <div class="doc-footer">
+    <div class="signature">Generated by Claude  ·  E&amp;L Scientific Copilot  ·  Synthesis from project knowledge</div>
+    <div class="confidential">CONFIDENTIAL  ·  AI output requires QA / Toxicology review</div>
+  </div>
+
+</div>
+
+<script>
+// =================== DATA ===================
+const DATA = [
+  {
+    id: "E-01", compound: "N-Nitroso-di-n-butylamine (NDBA)", cas: "924-16-3",
+    source: "Bromobutyl stopper - DBA accelerator residue",
+    method: "LC-MS/MS targeted",
+    extr: 0.020, leach: 0.0080,
+    limit: 0.0022, limitBasis: "Compound-specific AI 26.5 ng/day (M7 R2 addendum, industry-applied)",
+    extrOver: true, leachOver: true,
+    risk: "CRITICAL", riskLabel: "Critical",
+    tox: "ICH M7 Class 1 - Cohort of concern (nitrosamines); IARC Group 2A",
+    idConf: "HIGH", evidence: "CONFIRMED",
+    action: "Immediate: confirm root cause with ElastoSeal; quantify in DP at all timepoints; align mitigation with BR-540F-Eco supplier change (ESM-CN-2025-014); prepare regulatory notification per FDA Nitrosamine Guidance (2021) and EMA Q&A Rev. 21.",
+    trend: "Monotonic rise in DP from 2.0 ng/mL (T0) to 8.0 ng/mL (24M); linear extrapolation projects 10-11 ng/mL at 36M.",
+    citations: [
+      { doc: "NVT-217-ES-001", section: "§4 row E-01; §5.1 narrative" },
+      { doc: "NVT-217-LS-002", section: "§3 trending; §4.1 kinetics" },
+      { doc: "NVT-217-RA-001", section: "§3 row E-01; §6 mitigation; §7 residual risk" },
+      { doc: "ESM-CN-2025-014", section: "§3 rationale; §4.1 NDBA reduction" }
+    ]
+  },
+  {
+    id: "E-02", compound: "2-Mercaptobenzothiazole (MBT)", cas: "149-30-4",
+    source: "Bromobutyl stopper - vulcanization accelerator",
+    method: "LC-HRMS",
+    extr: 1.20, leach: 0.48,
+    limit: 0.83, limitBasis: "TTC-based AET (provisional Class 3); PDE-based limit pending classification confirmation",
+    extrOver: true, leachOver: false,
+    risk: "HIGH", riskLabel: "Actionable",
+    tox: "ICH M7 Class 3 (provisional, literature debated; reclassification to Class 5 with compound-specific PDE under evaluation)",
+    idConf: "HIGH", evidence: "CONFIRMED",
+    action: "Derive compound-specific PDE from rodent chronic data (NTP); commission Q-SAR (Derek, Sarah); engage toxicologist for final classification decision. If Class 5 confirmed, recompute limit on PDE basis - safety margin will substantially increase.",
+    trend: "Extractable 1.20 µg/mL exceeds AET; DP leachable rising 0.18 → 0.48 µg/mL (24M); projected ~0.65 µg/mL at 36M, still below current AET but margin narrowing.",
+    citations: [
+      { doc: "NVT-217-ES-001", section: "§4 row E-02; §5.2 narrative" },
+      { doc: "NVT-217-LS-002", section: "§3 trending; §4.2 kinetics" },
+      { doc: "NVT-217-RA-001", section: "§3 row E-02; CAPA-2026-003" }
+    ]
+  },
+  {
+    id: "E-07", compound: "Zinc dibutyldithiocarbamate (ZDBC)", cas: "136-23-2",
+    source: "Bromobutyl stopper - accelerator",
+    method: "LC-HRMS",
+    extr: 0.30, leach: 0.10,
+    limit: 0.83, limitBasis: "TTC-based AET",
+    extrOver: false, leachOver: false,
+    risk: "MEDIUM", riskLabel: "Medium",
+    tox: "ICH M7 Class 3 - structural alert for nitrosamine formation under specific conditions",
+    idConf: "MEDIUM", evidence: "SUPPORTED",
+    action: "Track in supplier change context: BR-540F-Eco replaces ZDBC with ZBEC, which has its own structural alert (NDBzA via dibenzylamine). Extend targeted nitrosamine panel to include NDBzA for any work on the new grade.",
+    trend: "Below AET; will be removed by supplier change to BR-540F-Eco (ESM-CN-2025-014 §2).",
+    citations: [
+      { doc: "NVT-217-ES-001", section: "§4 row E-07" },
+      { doc: "ESM-CN-2025-014", section: "§2 vulcanization changes; §4.1 ZDBC replacement" }
+    ]
+  },
+  {
+    id: "E-08", compound: "Bisphenol F (4,4'-methylenediphenol)", cas: "620-92-8",
+    source: "Tentative; possible curing residue (stopper)",
+    method: "LC-HRMS (no std)",
+    extr: 0.08, leach: null,
+    limit: 0.83, limitBasis: "TTC-based AET",
+    extrOver: false, leachOver: false,
+    risk: "MEDIUM", riskLabel: "Confirm ID",
+    tox: "ICH M7 Class 2 - endocrine activity concern (bisphenol family read-across)",
+    idConf: "LOW", evidence: "SPECULATIVE",
+    action: "Confirm identification with authentic reference standard or higher-resolution MS/MS. If confirmed, derive compound-specific assessment leveraging bisphenol family read-across; if not confirmed, retract from register.",
+    trend: "Not measured in leachables study - identification not confirmed.",
+    citations: [
+      { doc: "NVT-217-ES-001", section: "§4 row E-08; §7 limitations (tentative IDs)" },
+      { doc: "NVT-217-RA-001", section: "§3 tentative IDs row" }
+    ]
+  },
+  {
+    id: "E-09", compound: "Cyclic COP oligomer (m/z 555)", cas: "Not assigned",
+    source: "COP vial - low-MW oligomer",
+    method: "LC-HRMS (no std)",
+    extr: 0.30, leach: null,
+    limit: 0.83, limitBasis: "TTC-based AET (unclassified compound)",
+    extrOver: false, leachOver: false,
+    risk: "MEDIUM", riskLabel: "Confirm ID",
+    tox: "Unclassified - no published toxicity data for the specific cyclic oligomer",
+    idConf: "LOW", evidence: "SPECULATIVE",
+    action: "Pursue compound-specific characterization (MS/MS fragmentation, NMR if isolable). Consider read-across to characterized polyolefin oligomers if structural confirmation is achievable. Alternative: re-evaluate at PIQS / SVHC threshold using polymer-derived oligomer precedent.",
+    trend: "Detected in 50:50 EtOH/water extract only; not detected in DP at LOQ 0.05 µg/mL.",
+    citations: [
+      { doc: "NVT-217-ES-001", section: "§4 row E-09; §7 limitations" }
+    ]
+  },
+  {
+    id: "E-03", compound: "Irganox 1010", cas: "6683-19-8",
+    source: "Bromobutyl stopper - antioxidant",
+    method: "LC-HRMS",
+    extr: 0.85, leach: 0.22,
+    limit: 5.0, limitBasis: "PDE-derived limit (well-characterized; high PDE)",
+    extrOver: false, leachOver: false,
+    risk: "LOW", riskLabel: "Acceptable",
+    tox: "ICH M7 Class 5 - non-mutagenic, well-characterized; PDE >100 mg/day available",
+    idConf: "HIGH", evidence: "CONFIRMED",
+    action: "Continue trending in stability program; no action required.",
+    trend: "Steady migration upward, well within margin.",
+    citations: [
+      { doc: "NVT-217-ES-001", section: "§4 row E-03; §6 non-critical findings" },
+      { doc: "NVT-217-LS-002", section: "§4.3 antioxidant migration" }
+    ]
+  },
+  {
+    id: "E-04", compound: "Irganox 1076", cas: "2082-79-3",
+    source: "Bromobutyl stopper - antioxidant",
+    method: "LC-HRMS",
+    extr: 0.45, leach: 0.13,
+    limit: 5.0, limitBasis: "PDE-derived limit",
+    extrOver: false, leachOver: false,
+    risk: "LOW", riskLabel: "Acceptable",
+    tox: "ICH M7 Class 5 - non-mutagenic, well-characterized",
+    idConf: "HIGH", evidence: "CONFIRMED",
+    action: "No action; supplier change BR-540F-Eco reduces Irganox 1076 content (§2 of ESM-CN-2025-014).",
+    trend: "Steady migration upward, well within margin.",
+    citations: [
+      { doc: "NVT-217-ES-001", section: "§4 row E-04" },
+      { doc: "ESM-CN-2025-014", section: "§2 antioxidant changes" }
+    ]
+  },
+  {
+    id: "E-05", compound: "BHT (Butylated hydroxytoluene)", cas: "128-37-0",
+    source: "Bromobutyl stopper - antioxidant",
+    method: "HS-GC-MS",
+    extr: 0.40, leach: 0.06,
+    limit: 5.0, limitBasis: "GRAS for food use; very high PDE",
+    extrOver: false, leachOver: false,
+    risk: "LOW", riskLabel: "Acceptable",
+    tox: "ICH M7 Class 5 - non-mutagenic, GRAS",
+    idConf: "HIGH", evidence: "CONFIRMED",
+    action: "No action.",
+    trend: "Stable in DP (0.04 → 0.06 µg/mL over 24M).",
+    citations: [
+      { doc: "NVT-217-ES-001", section: "§4 row E-05" },
+      { doc: "NVT-217-LS-002", section: "§3 trending" }
+    ]
+  },
+  {
+    id: "E-06", compound: "2,4-Di-tert-butylphenol", cas: "96-76-4",
+    source: "Degradation product of Irganox 1010",
+    method: "GC-MS",
+    extr: 0.12, leach: null,
+    limit: 0.83, limitBasis: "TTC-based AET",
+    extrOver: false, leachOver: false,
+    risk: "LOW", riskLabel: "Acceptable",
+    tox: "ICH M7 Class 4 - low priority, structural alerts negative (Q-SAR)",
+    idConf: "MEDIUM", evidence: "SUPPORTED",
+    action: "No action; monitor in extractables on supplier change.",
+    trend: "Not in leachables panel.",
+    citations: [
+      { doc: "NVT-217-ES-001", section: "§4 row E-06" }
+    ]
+  },
+  {
+    id: "E-10", compound: "Toluene", cas: "108-88-3",
+    source: "Residual processing solvent (stopper)",
+    method: "HS-GC-MS",
+    extr: 0.017, leach: null,
+    limit: 740, limitBasis: "ICH Q3C Class 2 - PDE 8.9 mg/day",
+    extrOver: false, leachOver: false,
+    risk: "LOW", riskLabel: "Acceptable",
+    tox: "ICH Q3C Class 2 solvent",
+    idConf: "HIGH", evidence: "CONFIRMED",
+    action: "No action; far below PDE.",
+    trend: "Volatile; expected to decrease in DP.",
+    citations: [
+      { doc: "NVT-217-ES-001", section: "§4 row E-10" }
+    ]
+  },
+  {
+    id: "E-11", compound: "Cyclohexane", cas: "110-82-7",
+    source: "Residual processing solvent (stopper)",
+    method: "HS-GC-MS",
+    extr: 0.0085, leach: null,
+    limit: 3230, limitBasis: "ICH Q3C Class 2 - PDE 38.8 mg/day",
+    extrOver: false, leachOver: false,
+    risk: "LOW", riskLabel: "Acceptable",
+    tox: "ICH Q3C Class 2 solvent",
+    idConf: "HIGH", evidence: "CONFIRMED",
+    action: "No action.", trend: "Volatile; expected to decrease in DP.",
+    citations: [
+      { doc: "NVT-217-ES-001", section: "§4 row E-11" }
+    ]
+  },
+  {
+    id: "E-12", compound: "Zinc (total, Zn)", cas: "7440-66-6",
+    source: "Bromobutyl stopper - ZnO activator",
+    method: "ICP-MS",
+    extr: 0.028, leach: 0.015,
+    limit: 13, limitBasis: "ICH Q3D not listed (PDE oral 13 mg/day)",
+    extrOver: false, leachOver: false,
+    risk: "LOW", riskLabel: "Acceptable",
+    tox: "ICH Q3D non-Class",
+    idConf: "HIGH", evidence: "CONFIRMED",
+    action: "Continue routine elemental monitoring.",
+    trend: "Stable in DP (12 → 15 µg/L over 24M).",
+    citations: [
+      { doc: "NVT-217-ES-001", section: "§4 row E-12" },
+      { doc: "NVT-217-LS-002", section: "§3 trending" }
+    ]
+  },
+  {
+    id: "E-13", compound: "Iron (Fe)", cas: "7439-89-6",
+    source: "Process / equipment",
+    method: "ICP-MS",
+    extr: 0.012, leach: null,
+    limit: 11, limitBasis: "Below ICH Q3D thresholds",
+    extrOver: false, leachOver: false,
+    risk: "LOW", riskLabel: "Acceptable",
+    tox: "ICH Q3D non-Class", idConf: "HIGH", evidence: "CONFIRMED",
+    action: "No action.", trend: "Stable.",
+    citations: [{ doc: "NVT-217-ES-001", section: "§4 row E-13" }]
+  },
+  {
+    id: "E-14", compound: "Aluminum (Al)", cas: "7429-90-5",
+    source: "Overseal / process",
+    method: "ICP-MS",
+    extr: 0.035, leach: null,
+    limit: 5, limitBasis: "Below ICH Q3D thresholds",
+    extrOver: false, leachOver: false,
+    risk: "LOW", riskLabel: "Acceptable",
+    tox: "ICH Q3D non-Class", idConf: "HIGH", evidence: "CONFIRMED",
+    action: "No action.", trend: "Stable.",
+    citations: [{ doc: "NVT-217-ES-001", section: "§4 row E-14" }]
+  },
+  {
+    id: "E-15", compound: "Lead (Pb)", cas: "7439-92-1",
+    source: "Trace - Q3D Class 1",
+    method: "ICP-MS",
+    extr: 0.0002, leach: null,
+    limit: 0.42, limitBasis: "ICH Q3D Class 1 - PDE 5 µg/day parenteral",
+    extrOver: false, leachOver: false,
+    risk: "LOW", riskLabel: "Acceptable",
+    tox: "ICH Q3D Class 1", idConf: "HIGH", evidence: "CONFIRMED",
+    action: "No action; far below PDE.", trend: "<LOQ in all extracts.",
+    citations: [{ doc: "NVT-217-ES-001", section: "§4 row E-15" }]
+  }
+];
+
+// =================== RENDER ===================
+const RISK_ORDER = { CRITICAL: 0, HIGH: 1, MEDIUM: 2, LOW: 3 };
+const tbody = document.getElementById('register-body');
+let activeFilter = 'all';
+let sortKey = 'risk';
+let sortDir = 'asc';
+
+function fmtConc(v, over) {
+  if (v === null || v === undefined) return `<span style="color:var(--text-muted)">-</span>`;
+  let cls = over ? ' over' : '';
+  let str = (v < 0.01) ? v.toExponential(2) : v.toFixed(v < 1 ? 3 : 2);
+  return `<span class="num-cell${cls}">${str}</span>`;
+}
+
+function fmtLimit(v, basis) {
+  let str = (v < 0.01) ? v.toExponential(2) : v.toFixed(v < 1 ? 3 : (v < 100 ? 2 : 0));
+  return `<span class="num-cell">${str}<div style="font-family:var(--font-mono);font-size:9px;color:var(--text-muted);font-weight:400;text-align:right;margin-top:2px">${basis.split('(')[0].split(' - ')[0].split(';')[0].substring(0, 26)}</div></span>`;
+}
+
+function badge(risk) {
+  return `<span class="badge ${risk.toLowerCase()}">${risk}</span>`;
+}
+
+function citationChips(citations) {
+  return citations.map(c => `<span class="citation-chip"><span class="doc">${c.doc}</span>${c.section}</span>`).join('');
+}
+
+function renderRow(row) {
+  const tr = `
+    <tr data-id="${row.id}" data-risk="${row.risk}">
+      <td class="id-cell">${row.id}</td>
+      <td><span class="compound">${row.compound}</span><span class="compound-cas">CAS ${row.cas}</span></td>
+      <td>${row.source}</td>
+      <td><span style="font-family:var(--font-mono);font-size:11px;color:var(--text-secondary)">${row.method}</span></td>
+      <td style="text-align:right">${fmtConc(row.extr, row.extrOver)}</td>
+      <td style="text-align:right">${fmtConc(row.leach, row.leachOver)}</td>
+      <td style="text-align:right">${fmtLimit(row.limit, row.limitBasis)}</td>
+      <td>${badge(row.risk)}<div style="font-size:10px;color:var(--text-muted);margin-top:4px;font-family:var(--font-mono)">${row.riskLabel}</div></td>
+    </tr>
+    <tr class="detail-row" data-id="${row.id}-detail">
+      <td colspan="8">
+        <div class="detail-grid">
+          <div class="detail-block">
+            <h4>Toxicological assessment</h4>
+            <p>${row.tox}</p>
+            <div class="kv" style="margin-top:10px"><span class="k">Evidence</span><span class="v"><span class="evidence-tax ev-${row.evidence}">${row.evidence}</span></span></div>
+            <div class="kv"><span class="k">ID confidence</span><span class="v">${row.idConf}</span></div>
+            <div class="kv"><span class="k">Limit basis</span><span class="v" style="font-size:11px">${row.limitBasis}</span></div>
+          </div>
+          <div class="detail-block">
+            <h4>Analytical observation</h4>
+            <p style="font-size:12px">${row.trend}</p>
+          </div>
+          <div class="detail-block">
+            <h4>Recommended action</h4>
+            <p style="font-size:12px">${row.action}</p>
+            <h4 style="margin-top:14px">Source citations</h4>
+            <div class="citations">${citationChips(row.citations)}</div>
+          </div>
+        </div>
+      </td>
+    </tr>`;
+  return tr;
+}
+
+function applySortFilter() {
+  let rows = [...DATA];
+  if (activeFilter !== 'all') rows = rows.filter(r => r.risk === activeFilter);
+  rows.sort((a, b) => {
+    let av, bv;
+    if (sortKey === 'risk') { av = RISK_ORDER[a.risk]; bv = RISK_ORDER[b.risk]; }
+    else if (sortKey === 'extr' || sortKey === 'leach' || sortKey === 'limit') {
+      av = a[sortKey] ?? -1; bv = b[sortKey] ?? -1;
+    } else { av = a[sortKey] ?? ''; bv = b[sortKey] ?? ''; }
+    if (av < bv) return sortDir === 'asc' ? -1 : 1;
+    if (av > bv) return sortDir === 'asc' ? 1 : -1;
+    return 0;
+  });
+  tbody.innerHTML = rows.map(renderRow).join('');
+  document.querySelectorAll('th[data-sort]').forEach(th => {
+    th.classList.remove('sort-asc', 'sort-desc');
+    if (th.dataset.sort === sortKey) th.classList.add(sortDir === 'asc' ? 'sort-asc' : 'sort-desc');
+  });
+}
+
+// counts
+function updateCounts() {
+  document.getElementById('cnt-all').textContent = `(${DATA.length})`;
+  document.getElementById('cnt-CRITICAL').textContent = `(${DATA.filter(r => r.risk === 'CRITICAL').length})`;
+  document.getElementById('cnt-HIGH').textContent = `(${DATA.filter(r => r.risk === 'HIGH').length})`;
+  document.getElementById('cnt-MEDIUM').textContent = `(${DATA.filter(r => r.risk === 'MEDIUM').length})`;
+  document.getElementById('cnt-LOW').textContent = `(${DATA.filter(r => r.risk === 'LOW').length})`;
+  document.getElementById('kpi-crit').textContent = DATA.filter(r => r.risk === 'CRITICAL').length;
+  document.getElementById('kpi-high').textContent = DATA.filter(r => r.risk === 'HIGH').length;
+  document.getElementById('kpi-med').textContent = DATA.filter(r => r.risk === 'MEDIUM').length;
+  document.getElementById('kpi-low').textContent = DATA.filter(r => r.risk === 'LOW').length;
+  document.getElementById('kpi-tot').textContent = DATA.length;
+}
+
+// event delegation
+document.querySelectorAll('.pill').forEach(p => p.addEventListener('click', (e) => {
+  document.querySelectorAll('.pill').forEach(x => x.classList.remove('active'));
+  p.classList.add('active');
+  activeFilter = p.dataset.filter;
+  applySortFilter();
+}));
+
+document.querySelectorAll('th[data-sort]').forEach(th => th.addEventListener('click', () => {
+  if (sortKey === th.dataset.sort) sortDir = (sortDir === 'asc' ? 'desc' : 'asc');
+  else { sortKey = th.dataset.sort; sortDir = 'asc'; }
+  applySortFilter();
+}));
+
+tbody.addEventListener('click', (e) => {
+  const tr = e.target.closest('tr[data-id]');
+  if (!tr || tr.classList.contains('detail-row')) return;
+  const id = tr.dataset.id;
+  const detail = tbody.querySelector(`tr[data-id="${id}-detail"]`);
+  const isOpen = detail.classList.contains('open');
+  // close all
+  tbody.querySelectorAll('tr.detail-row.open').forEach(d => d.classList.remove('open'));
+  tbody.querySelectorAll('tr.expanded').forEach(d => d.classList.remove('expanded'));
+  if (!isOpen) { detail.classList.add('open'); tr.classList.add('expanded'); }
+});
+
+updateCounts();
+applySortFilter();
+</script>
+</body>
+</html>

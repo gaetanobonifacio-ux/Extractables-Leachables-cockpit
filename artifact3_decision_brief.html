@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NVT-217 - E&L Risk Summary and Decision Brief</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Serif:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg-base: #0a0e16;
+    --bg-elev-1: #11161f;
+    --bg-elev-2: #161c28;
+    --bg-elev-3: #1c2331;
+    --border: #2a3245;
+    --border-strong: #3a4356;
+    --text-primary: #e8e6e0;
+    --text-secondary: #b4b8c5;
+    --text-muted: #6b7184;
+    --accent: #d4a574;
+    --accent-dim: #8a6d4b;
+    --critical: #ef4444;
+    --critical-bg: rgba(239, 68, 68, 0.08);
+    --major: #f97316;
+    --major-bg: rgba(249, 115, 22, 0.08);
+    --minor: #eab308;
+    --minor-bg: rgba(234, 179, 8, 0.08);
+    --ok: #10b981;
+    --ok-bg: rgba(16, 185, 129, 0.08);
+    --info: #06b6d4;
+    --info-bg: rgba(6, 182, 212, 0.08);
+    --violet: #a78bfa;
+    --font-display: 'IBM Plex Serif', Georgia, serif;
+    --font-body: 'IBM Plex Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+    --font-mono: 'IBM Plex Mono', 'SF Mono', Menlo, monospace;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body {
+    background: var(--bg-base); color: var(--text-primary);
+    font-family: var(--font-body); font-size: 14px; line-height: 1.55;
+    -webkit-font-smoothing: antialiased; min-height: 100vh;
+  }
+  body {
+    background-image:
+      radial-gradient(ellipse at top, rgba(212, 165, 116, 0.04) 0%, transparent 50%),
+      radial-gradient(ellipse at bottom right, rgba(239, 68, 68, 0.03) 0%, transparent 60%);
+    background-attachment: fixed;
+  }
+  .grid-overlay {
+    position: fixed; inset: 0;
+    background-image:
+      linear-gradient(rgba(255,255,255,0.012) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,0.012) 1px, transparent 1px);
+    background-size: 48px 48px; pointer-events: none; z-index: 0;
+  }
+  .container { position: relative; z-index: 1; max-width: 1140px; margin: 0 auto; padding: 32px 28px 64px; }
+
+  /* HEADER */
+  header.masthead {
+    border-top: 1px solid var(--border); border-bottom: 1px solid var(--border);
+    padding: 24px 0; display: grid; grid-template-columns: 1fr auto; gap: 24px;
+    align-items: end; margin-bottom: 28px;
+  }
+  .masthead .eyebrow {
+    font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.18em;
+    text-transform: uppercase; color: var(--accent); font-weight: 500; margin-bottom: 8px;
+  }
+  .masthead h1 {
+    font-family: var(--font-display); font-weight: 600; font-size: 34px;
+    line-height: 1.15; margin-bottom: 4px; letter-spacing: -0.01em;
+  }
+  .masthead .subtitle { font-family: var(--font-display); font-style: italic; color: var(--text-secondary); font-size: 16px; }
+  .meta-panel { text-align: right; font-family: var(--font-mono); font-size: 11px; color: var(--text-muted); line-height: 1.8; }
+  .meta-panel .value { color: var(--text-secondary); }
+  .ai-tag {
+    display: inline-flex; align-items: center; gap: 6px; background: var(--bg-elev-2);
+    border: 1px solid var(--border); padding: 4px 10px; border-radius: 4px;
+    font-family: var(--font-mono); font-size: 10px; color: var(--accent); margin-top: 6px;
+  }
+  .ai-tag::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 8px var(--accent); }
+
+  /* BLUF VERDICT BANNER */
+  .verdict {
+    background: linear-gradient(135deg, rgba(239,68,68,0.12), rgba(249,115,22,0.06));
+    border: 1px solid var(--critical); border-left: 5px solid var(--critical);
+    border-radius: 6px; padding: 24px 28px; margin-bottom: 28px;
+    display: grid; grid-template-columns: auto 1fr; gap: 24px; align-items: center;
+  }
+  .verdict .stamp {
+    font-family: var(--font-mono); font-weight: 600; text-align: center;
+    border: 2px solid var(--critical); border-radius: 6px; padding: 14px 18px;
+    color: var(--critical); min-width: 150px;
+  }
+  .verdict .stamp .big { font-size: 26px; letter-spacing: 0.04em; line-height: 1; }
+  .verdict .stamp .small { font-size: 10px; letter-spacing: 0.12em; margin-top: 6px; color: var(--text-secondary); }
+  .verdict .statement h2 {
+    font-family: var(--font-display); font-size: 20px; font-weight: 600; color: var(--text-primary);
+    margin-bottom: 8px; line-height: 1.3;
+  }
+  .verdict .statement p { color: var(--text-secondary); font-size: 13.5px; line-height: 1.6; }
+  .verdict .statement .driver { color: var(--critical); font-weight: 600; }
+
+  /* SECTION TITLES */
+  .section-title {
+    font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.18em;
+    text-transform: uppercase; color: var(--accent); font-weight: 600;
+    margin: 32px 0 14px; padding-bottom: 8px; border-bottom: 1px solid var(--border);
+  }
+
+  /* AT A GLANCE STRIP */
+  .glance { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1px; background: var(--border); border: 1px solid var(--border); margin-bottom: 8px; }
+  .glance .g {
+    background: var(--bg-elev-1); padding: 18px 18px; position: relative;
+  }
+  .glance .g .num { font-family: var(--font-display); font-size: 30px; font-weight: 600; line-height: 1; margin-bottom: 6px; }
+  .glance .g .lbl { font-family: var(--font-mono); font-size: 9.5px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-muted); line-height: 1.4; }
+  .glance .g.c1 .num { color: var(--critical); }
+  .glance .g.c2 .num { color: var(--major); }
+  .glance .g.c3 .num { color: var(--info); }
+  .glance .g.c4 .num { color: var(--accent); }
+
+  /* CRITICAL FINDINGS CARDS */
+  .findings { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .finding {
+    background: var(--bg-elev-1); border: 1px solid var(--border); border-radius: 6px;
+    padding: 20px 22px; position: relative; overflow: hidden;
+  }
+  .finding::before { content: ''; position: absolute; top: 0; left: 0; width: 4px; height: 100%; }
+  .finding.crit::before { background: var(--critical); }
+  .finding.act::before { background: var(--major); }
+  .finding .f-head { display: flex; align-items: baseline; gap: 10px; margin-bottom: 12px; }
+  .finding .f-tag {
+    font-family: var(--font-mono); font-size: 10px; font-weight: 600; letter-spacing: 0.08em;
+    padding: 3px 8px; border-radius: 2px; border: 1px solid; text-transform: uppercase;
+  }
+  .finding.crit .f-tag { color: var(--critical); border-color: var(--critical); background: var(--critical-bg); }
+  .finding.act .f-tag { color: var(--major); border-color: var(--major); background: var(--major-bg); }
+  .finding .f-name { font-family: var(--font-display); font-size: 17px; font-weight: 600; color: var(--text-primary); }
+  .finding .f-sub { font-family: var(--font-mono); font-size: 10.5px; color: var(--text-muted); margin-top: 2px; }
+  .finding .f-metric {
+    display: flex; gap: 18px; margin: 14px 0; padding: 12px 0; border-top: 1px solid var(--border); border-bottom: 1px solid var(--border);
+  }
+  .finding .f-metric .m .mv { font-family: var(--font-mono); font-size: 18px; font-weight: 600; }
+  .finding .f-metric .m .ml { font-family: var(--font-mono); font-size: 9px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-muted); margin-top: 3px; }
+  .finding.crit .f-metric .m.headline .mv { color: var(--critical); }
+  .finding.act .f-metric .m.headline .mv { color: var(--major); }
+  .finding .f-metric .m .mv.neutral { color: var(--text-secondary); }
+  .finding .f-body { font-size: 12.5px; color: var(--text-secondary); line-height: 1.6; }
+  .finding .f-cite { margin-top: 12px; }
+  .citation-chip { display: inline-block; margin: 4px 4px 0 0; font-family: var(--font-mono); font-size: 10px; color: var(--text-secondary); background: var(--bg-elev-3); border: 1px solid var(--border); padding: 3px 7px; border-radius: 2px; }
+  .citation-chip .doc { color: var(--accent); margin-right: 4px; }
+
+  /* DECISION OPTIONS */
+  .options { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+  .option {
+    background: var(--bg-elev-1); border: 1px solid var(--border); border-radius: 6px; padding: 20px;
+    display: flex; flex-direction: column;
+  }
+  .option.recommended { border-color: var(--ok); box-shadow: 0 0 0 1px var(--ok-bg); }
+  .option .o-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px; }
+  .option .o-label { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-muted); }
+  .option .o-rec-badge {
+    font-family: var(--font-mono); font-size: 9px; font-weight: 600; letter-spacing: 0.08em;
+    color: var(--ok); border: 1px solid var(--ok); background: var(--ok-bg); padding: 2px 7px; border-radius: 2px; text-transform: uppercase;
+  }
+  .option .o-title { font-family: var(--font-display); font-size: 17px; font-weight: 600; color: var(--text-primary); margin-bottom: 12px; line-height: 1.25; }
+  .option .o-row { font-size: 12px; padding: 7px 0; border-bottom: 1px dashed var(--border); display: flex; gap: 8px; }
+  .option .o-row:last-of-type { border-bottom: none; }
+  .option .o-row .ico { flex-shrink: 0; width: 14px; font-family: var(--font-mono); font-weight: 600; }
+  .option .o-row.pro .ico { color: var(--ok); }
+  .option .o-row.con .ico { color: var(--critical); }
+  .option .o-row .txt { color: var(--text-secondary); line-height: 1.45; }
+  .option .o-timeline {
+    margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--border);
+    font-family: var(--font-mono); font-size: 11px; color: var(--text-secondary);
+  }
+  .option .o-timeline .k { color: var(--text-muted); }
+
+  /* RECOMMENDED PATH / TIMELINE */
+  .roadmap { background: var(--bg-elev-1); border: 1px solid var(--border); border-radius: 6px; padding: 8px 24px; }
+  .step { display: grid; grid-template-columns: 130px 1fr; gap: 20px; padding: 16px 0; border-bottom: 1px solid var(--border); position: relative; }
+  .step:last-child { border-bottom: none; }
+  .step .when { font-family: var(--font-mono); font-size: 12px; color: var(--accent); font-weight: 600; padding-top: 1px; }
+  .step .when .ph { display: block; font-size: 9px; color: var(--text-muted); letter-spacing: 0.08em; text-transform: uppercase; margin-top: 3px; }
+  .step .what { font-size: 13px; color: var(--text-secondary); line-height: 1.55; }
+  .step .what strong { color: var(--text-primary); font-weight: 600; }
+  .step .what .owner { font-family: var(--font-mono); font-size: 10.5px; color: var(--text-muted); margin-top: 4px; display: block; }
+  .step .what .gate { display: inline-block; font-family: var(--font-mono); font-size: 9.5px; font-weight: 600; letter-spacing: 0.06em; color: var(--critical); border: 1px solid var(--critical); background: var(--critical-bg); padding: 1px 7px; border-radius: 2px; margin-left: 8px; text-transform: uppercase; }
+  .step .what .gate.ok { color: var(--ok); border-color: var(--ok); background: var(--ok-bg); }
+
+  /* ASSUMPTIONS / CONDITIONS */
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+  .panel { background: var(--bg-elev-1); border: 1px solid var(--border); border-radius: 6px; padding: 20px 22px; }
+  .panel h4 { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.15em; text-transform: uppercase; color: var(--accent); font-weight: 600; margin-bottom: 12px; }
+  .panel ul { list-style: none; }
+  .panel li { font-size: 12.5px; color: var(--text-secondary); padding: 7px 0 7px 18px; position: relative; line-height: 1.5; border-bottom: 1px dashed var(--border); }
+  .panel li:last-child { border-bottom: none; }
+  .panel li::before { content: ''; position: absolute; left: 0; top: 13px; width: 6px; height: 6px; border-radius: 50%; }
+  .panel.assumptions li::before { background: var(--minor); }
+  .panel.conditions li::before { background: var(--info); }
+  .panel li .ev { font-family: var(--font-mono); font-size: 9px; font-weight: 600; letter-spacing: 0.06em; padding: 1px 5px; border-radius: 2px; margin-left: 6px; }
+  .ev-INFERRED { color: var(--minor); background: var(--minor-bg); }
+  .ev-SPECULATIVE { color: var(--major); background: var(--major-bg); }
+  .ev-SUPPORTED { color: var(--info); background: var(--info-bg); }
+
+  /* LEGEND + FOOTER */
+  .legend { margin-top: 32px; padding: 22px 24px; background: var(--bg-elev-1); border: 1px solid var(--border); border-radius: 6px; }
+  .legend h4 { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--accent); font-weight: 600; margin-bottom: 12px; }
+  .legend .doc-row { font-family: var(--font-mono); font-size: 11px; color: var(--text-secondary); padding: 4px 0; border-bottom: 1px dashed var(--border); display: inline-block; width: 100%; }
+  .legend .doc-row .doc { color: var(--accent); font-weight: 600; }
+  .disclaimer {
+    margin-top: 20px; padding: 16px 20px; background: var(--bg-elev-2);
+    border: 1px solid var(--border-strong); border-radius: 6px;
+    font-size: 12px; color: var(--text-secondary); line-height: 1.6;
+  }
+  .disclaimer strong { color: var(--accent); }
+  .doc-footer { margin-top: 28px; padding-top: 20px; border-top: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; font-family: var(--font-mono); font-size: 11px; color: var(--text-muted); }
+  .doc-footer .confidential { color: var(--accent); letter-spacing: 0.1em; }
+
+  @media (max-width: 920px) {
+    .verdict { grid-template-columns: 1fr; }
+    .glance { grid-template-columns: repeat(2, 1fr); }
+    .findings, .options, .two-col { grid-template-columns: 1fr; }
+    .step { grid-template-columns: 1fr; gap: 6px; }
+    .masthead { grid-template-columns: 1fr; }
+    .meta-panel { text-align: left; }
+  }
+</style>
+</head>
+<body>
+<div class="grid-overlay"></div>
+<div class="container">
+
+  <header class="masthead">
+    <div>
+      <div class="eyebrow">Artifact 03  ·  Extractables &amp; Leachables  ·  Management Decision Document</div>
+      <h1>E&amp;L Risk Summary and Decision Brief</h1>
+      <div class="subtitle">NVT-217 (tenelizumab) - submission-readiness decision for the primary container closure system</div>
+    </div>
+    <div class="meta-panel">
+      <div>Sponsor  <span class="value">NovaTera Biologics AG</span></div>
+      <div>Prepared for  <span class="value">CMC / RA steering review</span></div>
+      <div>Decision date  <span class="value">April 2026 (planned)</span></div>
+      <div>Data cut-off  <span class="value">31 Jan 2026</span></div>
+      <div class="ai-tag">AI-assisted synthesis  ·  cite sources</div>
+    </div>
+  </header>
+
+  <!-- BLUF VERDICT -->
+  <div class="verdict">
+    <div class="stamp">
+      <div class="big">NOT READY</div>
+      <div class="small">E&amp;L SUBMISSION POSTURE</div>
+    </div>
+    <div class="statement">
+      <h2>NVT-217 is not submission-ready from an E&amp;L perspective pending remediation of one critical finding.</h2>
+      <p>The principal driver is <span class="driver">a confirmed N-nitrosamine (NDBA) leachable exceeding its compound-specific acceptable-intake-derived limit by approximately 3.6-fold in the drug product, trending upward over shelf life.</span> A defined mitigation pathway exists (supplier formulation change), but it is unverified under sponsor conditions and its timing must be aligned with the filing strategy. A second, classification-sensitive finding (MBT) and several documentation gaps are actionable but not, on their own, submission-blocking.</p>
+    </div>
+  </div>
+
+  <!-- AT A GLANCE -->
+  <div class="section-title">At a glance</div>
+  <div class="glance">
+    <div class="g c1"><div class="num">1</div><div class="lbl">Submission-blocking<br>finding (NDBA)</div></div>
+    <div class="g c2"><div class="num">1 + 4</div><div class="lbl">Actionable finding +<br>major reg. gaps</div></div>
+    <div class="g c3"><div class="num">5</div><div class="lbl">Cross-source<br>inconsistencies</div></div>
+    <div class="g c4"><div class="num">Q2 2026</div><div class="lbl">Earliest mitigation<br>material availability</div></div>
+  </div>
+
+  <!-- CRITICAL FINDINGS -->
+  <div class="section-title">The two findings that drive the decision</div>
+  <div class="findings">
+    <div class="finding crit">
+      <div class="f-head">
+        <span class="f-tag">Critical · blocking</span>
+      </div>
+      <div class="f-name">NDBA (N-nitroso-di-n-butylamine)</div>
+      <div class="f-sub">CAS 924-16-3 · ICH M7 cohort of concern · IARC 2A · from stopper</div>
+      <div class="f-metric">
+        <div class="m headline"><div class="mv">3.6x</div><div class="ml">over limit in DP (24M)</div></div>
+        <div class="m"><div class="mv neutral">8 ng/mL</div><div class="ml">leachable vs 2.2 limit</div></div>
+        <div class="m"><div class="mv neutral">Rising</div><div class="ml">2.0 to 8.0 over 24M</div></div>
+      </div>
+      <div class="f-body">Confirmed in the drug product under label storage, not only under exaggerated extraction. Linear extrapolation projects 10 to 11 ng/mL at end-of-shelf-life. Requires formal risk evaluation and a regulatory notification strategy under ICH M7(R2) and the FDA/EMA nitrosamine frameworks.</div>
+      <div class="f-cite">
+        <span class="citation-chip"><span class="doc">ES-001</span>§5.1</span>
+        <span class="citation-chip"><span class="doc">LS-002</span>§4.1</span>
+        <span class="citation-chip"><span class="doc">RA-001</span>§7</span>
+      </div>
+    </div>
+
+    <div class="finding act">
+      <div class="f-head">
+        <span class="f-tag">Actionable · non-blocking</span>
+      </div>
+      <div class="f-name">MBT (2-mercaptobenzothiazole)</div>
+      <div class="f-sub">CAS 149-30-4 · classification-sensitive · from stopper</div>
+      <div class="f-metric">
+        <div class="m headline"><div class="mv">1.4x</div><div class="ml">over AET (extractable)</div></div>
+        <div class="m"><div class="mv neutral">0.48 ug/mL</div><div class="ml">leachable (24M)</div></div>
+        <div class="m"><div class="mv neutral">Class 3?</div><div class="ml">vs Class 5 pending</div></div>
+      </div>
+      <div class="f-body">Exceeds the TTC-based AET as an extractable; the drug-product leachable remains below AET but is trending upward. The disposition hinges on classification: a documented compound-specific PDE (if Class 5) would substantially widen the margin and likely close the issue without hardware change.</div>
+      <div class="f-cite">
+        <span class="citation-chip"><span class="doc">ES-001</span>§5.2</span>
+        <span class="citation-chip"><span class="doc">LS-002</span>§4.2</span>
+        <span class="citation-chip"><span class="doc">RA-001</span>CAPA-2026-003</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- DECISION OPTIONS -->
+  <div class="section-title">Decision options</div>
+  <div class="options">
+    <div class="option">
+      <div class="o-head"><span class="o-label">Option A</span></div>
+      <div class="o-title">File now with the current CCS</div>
+      <div class="o-row con"><span class="ico">X</span><span class="txt">NDBA exceedance unresolved; high risk of refuse-to-file or major deficiency</span></div>
+      <div class="o-row con"><span class="ico">X</span><span class="txt">Inconsistent with ICH M7 and nitrosamine frameworks</span></div>
+      <div class="o-row pro"><span class="ico">+</span><span class="txt">Fastest nominal timeline</span></div>
+      <div class="o-timeline"><span class="k">Net:</span> not defensible</div>
+    </div>
+
+    <div class="option recommended">
+      <div class="o-head"><span class="o-label">Option B</span><span class="o-rec-badge">Recommended</span></div>
+      <div class="o-title">Remediate via supplier change, then file</div>
+      <div class="o-row pro"><span class="ico">+</span><span class="txt">Removes the NDBA precursor at source (BR-540F-Eco)</span></div>
+      <div class="o-row pro"><span class="ico">+</span><span class="txt">Addresses the root cause, not just the symptom</span></div>
+      <div class="o-row con"><span class="ico">!</span><span class="txt">Requires re-qualification incl. NDBzA panel extension</span></div>
+      <div class="o-row con"><span class="ico">!</span><span class="txt">Gated by material availability (Q2 2026)</span></div>
+      <div class="o-timeline"><span class="k">Net:</span> defensible; timeline-driven</div>
+    </div>
+
+    <div class="option">
+      <div class="o-head"><span class="o-label">Option C</span></div>
+      <div class="o-title">Justify current CCS toxicologically</div>
+      <div class="o-row pro"><span class="ico">+</span><span class="txt">No hardware change; potentially faster than B</span></div>
+      <div class="o-row con"><span class="ico">X</span><span class="txt">A 3.6x AI exceedance for a cohort-of-concern nitrosamine is difficult to justify</span></div>
+      <div class="o-row con"><span class="ico">X</span><span class="txt">Rising trend undermines any end-of-shelf-life argument</span></div>
+      <div class="o-timeline"><span class="k">Net:</span> low probability of success</div>
+    </div>
+  </div>
+
+  <!-- RECOMMENDED PATH -->
+  <div class="section-title">Recommended path forward (Option B) - sequenced plan</div>
+  <div class="roadmap">
+    <div class="step">
+      <div class="when">Now - Q1 2026<span class="ph">Immediate</span></div>
+      <div class="what"><strong>Accept the supplier change in principle and define the regulatory notification strategy.</strong> Document an interim risk position for material already in stability. <span class="gate">Gate: notification plan</span><span class="owner">Owner: RA + CMC · ref CAPA-2026-002</span></div>
+    </div>
+    <div class="step">
+      <div class="when">Q1 - Q2 2026<span class="ph">Parallel track</span></div>
+      <div class="what"><strong>Extend and validate the targeted nitrosamine panel to include NDBzA</strong> ahead of any work on the new grade; request dibenzylamine residual and cure-condition data from the supplier. <span class="gate">Gate: method validated</span><span class="owner">Owner: Analytical Sciences · ref GAP-05</span></div>
+    </div>
+    <div class="step">
+      <div class="when">Q1 - Q3 2026<span class="ph">Parallel track</span></div>
+      <div class="what"><strong>Complete the 30M and 36M leachables timepoints</strong> on the current CCS and replace linear extrapolation with an Arrhenius-supported kinetic model. <span class="gate ok">Closes data gap</span><span class="owner">Owner: Analytical Sciences · ref CAPA-2025-031</span></div>
+    </div>
+    <div class="step">
+      <div class="when">Q1 - Q2 2026<span class="ph">Parallel track</span></div>
+      <div class="what"><strong>Resolve MBT classification</strong> via compound-specific PDE derivation and Q-SAR; issue a documented toxicology decision. <span class="gate ok">Likely closes MBT</span><span class="owner">Owner: Toxicology · ref CAPA-2026-003</span></div>
+    </div>
+    <div class="step">
+      <div class="when">Q2 - Q3 2026<span class="ph">Verification</span></div>
+      <div class="what"><strong>Comparative extractables study on BR-540F-Eco</strong> under representative sponsor conditions; confirm quantified residual NDBA is below 2.2 ng/mL and that net nitrosamine risk (incl. NDBzA) is reduced. <span class="gate">Gate: NDBA verified</span><span class="owner">Owner: Analytical Sciences + Toxicology · ref INC-01, INC-02</span></div>
+    </div>
+    <div class="step">
+      <div class="when">Q4 2026<span class="ph">Decision</span></div>
+      <div class="what"><strong>Cross-functional readiness re-review and go/no-go for filing</strong> with the remediated CCS, full shelf-life leachables data, and aligned toxicological rationale. <span class="gate ok">Target: ready</span><span class="owner">Owner: CMC/RA steering</span></div>
+    </div>
+  </div>
+
+  <!-- ASSUMPTIONS + CONDITIONS -->
+  <div class="section-title">Decision basis - assumptions and conditions for success</div>
+  <div class="two-col">
+    <div class="panel assumptions">
+      <h4>Key assumptions (verify before relying on this brief)</h4>
+      <ul>
+        <li>NDBA migration continues approximately linearly to 36M; the model is provisional pending kinetic confirmation.<span class="ev ev-INFERRED">INFERRED</span></li>
+        <li>The applied NDBA AI of 26.5 ng/day is appropriate; a regulatory-endorsed compound-specific AI is not yet finalised.<span class="ev ev-INFERRED">INFERRED</span></li>
+        <li>The 1-to-10-year exposure tier (TTC 10 ug/day) is justified; a lifetime tier would tighten the AET ~7-fold.<span class="ev ev-INFERRED">INFERRED</span></li>
+        <li>BR-540F-Eco materially reduces residual NDBA below the limit; supplier claim not yet verified under sponsor conditions.<span class="ev ev-SPECULATIVE">SPECULATIVE</span></li>
+      </ul>
+    </div>
+    <div class="panel conditions">
+      <h4>Conditions that must hold for Option B to deliver</h4>
+      <ul>
+        <li>Supplier delivers quantified residual NDBA and dibenzylamine data for the new grade.<span class="ev ev-SUPPORTED">SUPPORTED</span></li>
+        <li>NDBzA method is validated before any new-grade qualification work begins.<span class="ev ev-SUPPORTED">SUPPORTED</span></li>
+        <li>36M leachables data confirm no other compound approaches its limit at end-of-shelf-life.<span class="ev ev-SUPPORTED">SUPPORTED</span></li>
+        <li>Filing timeline can absorb a gate at Q4 2026; if not, escalate the bridging-inventory and notification options.<span class="ev ev-SUPPORTED">SUPPORTED</span></li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- TRACEABILITY -->
+  <div class="legend">
+    <h4>Source documents - traceability</h4>
+    <span class="doc-row"><span class="doc">NVT-217-ES-001</span> v1.1 · Extractables Study Report &nbsp;&nbsp; <span class="doc">NVT-217-LS-002</span> v1.0 · Leachables Stability (24M interim)</span>
+    <span class="doc-row"><span class="doc">NVT-217-RA-001</span> v2.0 · Internal E&amp;L Risk Assessment &nbsp;&nbsp; <span class="doc">ESM-CN-2025-014</span> · Supplier Change Notification</span>
+    <span class="doc-row"><span class="doc">NVT-217-CCS-001</span> v2.0 · Container Closure System &nbsp;&nbsp; <span class="doc">NVT-217-DPS-001</span> v3.2 · Drug Product Specification</span>
+  </div>
+
+  <div class="disclaimer">
+    <strong>Scope and limitations.</strong> This brief is an AI-assisted synthesis of the cited project documents, prepared to support a human decision. It does not constitute a regulatory decision or a toxicological conclusion. All findings, limits, classifications, and the recommended path require review and sign-off by qualified QA, RA, and toxicology personnel before any action. Quantitative limits depend on assumptions stated above (notably the exposure tier and the applied NDBA acceptable intake), which must be independently confirmed.
+  </div>
+
+  <div class="doc-footer">
+    <div>Generated by Claude · E&amp;L Scientific Copilot · Synthesis from project knowledge</div>
+    <div class="confidential">CONFIDENTIAL · AI output requires QA / RA / Toxicology review</div>
+  </div>
+
+</div>
+</body>
+</html>

@@ -1,0 +1,678 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NVT-217 - Regulatory Gap Assessment</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Serif:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg-base: #0a0e16;
+    --bg-elev-1: #11161f;
+    --bg-elev-2: #161c28;
+    --bg-elev-3: #1c2331;
+    --border: #2a3245;
+    --border-strong: #3a4356;
+    --text-primary: #e8e6e0;
+    --text-secondary: #b4b8c5;
+    --text-muted: #6b7184;
+    --accent: #d4a574;
+    --accent-dim: #8a6d4b;
+    --critical: #ef4444;
+    --critical-bg: rgba(239, 68, 68, 0.08);
+    --major: #f97316;
+    --major-bg: rgba(249, 115, 22, 0.08);
+    --minor: #eab308;
+    --minor-bg: rgba(234, 179, 8, 0.08);
+    --ok: #10b981;
+    --ok-bg: rgba(16, 185, 129, 0.08);
+    --info: #06b6d4;
+    --info-bg: rgba(6, 182, 212, 0.08);
+    --na: #4b5163;
+    --font-display: 'IBM Plex Serif', Georgia, serif;
+    --font-body: 'IBM Plex Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+    --font-mono: 'IBM Plex Mono', 'SF Mono', Menlo, monospace;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body {
+    background: var(--bg-base); color: var(--text-primary);
+    font-family: var(--font-body); font-size: 14px; line-height: 1.55;
+    -webkit-font-smoothing: antialiased; min-height: 100vh;
+  }
+  body {
+    background-image:
+      radial-gradient(ellipse at top, rgba(212, 165, 116, 0.04) 0%, transparent 50%),
+      radial-gradient(ellipse at bottom right, rgba(249, 115, 22, 0.03) 0%, transparent 60%);
+    background-attachment: fixed;
+  }
+  .grid-overlay {
+    position: fixed; inset: 0;
+    background-image:
+      linear-gradient(rgba(255,255,255,0.012) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,0.012) 1px, transparent 1px);
+    background-size: 48px 48px; pointer-events: none; z-index: 0;
+  }
+  .container { position: relative; z-index: 1; max-width: 1280px; margin: 0 auto; padding: 32px 28px 64px; }
+
+  /* HEADER */
+  header.masthead {
+    border-top: 1px solid var(--border); border-bottom: 1px solid var(--border);
+    padding: 24px 0; display: grid; grid-template-columns: 1fr auto; gap: 24px;
+    align-items: end; margin-bottom: 32px;
+  }
+  .masthead .eyebrow {
+    font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.18em;
+    text-transform: uppercase; color: var(--accent); font-weight: 500; margin-bottom: 8px;
+  }
+  .masthead h1 {
+    font-family: var(--font-display); font-weight: 600; font-size: 36px;
+    line-height: 1.15; margin-bottom: 4px; letter-spacing: -0.01em;
+  }
+  .masthead .subtitle { font-family: var(--font-display); font-style: italic; color: var(--text-secondary); font-size: 16px; }
+  .meta-panel { text-align: right; font-family: var(--font-mono); font-size: 11px; color: var(--text-muted); line-height: 1.8; }
+  .meta-panel .value { color: var(--text-secondary); }
+  .ai-tag {
+    display: inline-flex; align-items: center; gap: 6px; background: var(--bg-elev-2);
+    border: 1px solid var(--border); padding: 4px 10px; border-radius: 4px;
+    font-family: var(--font-mono); font-size: 10px; color: var(--accent); margin-top: 6px;
+  }
+  .ai-tag::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 8px var(--accent); }
+
+  /* KPI STRIP */
+  .kpi-strip { display: grid; grid-template-columns: repeat(5, 1fr); gap: 1px; background: var(--border); border: 1px solid var(--border); margin-bottom: 32px; }
+  .kpi { background: var(--bg-elev-1); padding: 20px; position: relative; }
+  .kpi .num { font-family: var(--font-display); font-size: 38px; font-weight: 600; line-height: 1; margin-bottom: 8px; }
+  .kpi .lbl { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-muted); }
+  .kpi.critical .num { color: var(--critical); }
+  .kpi.major .num { color: var(--major); }
+  .kpi.minor .num { color: var(--minor); }
+  .kpi.ok .num { color: var(--ok); }
+  .kpi.info .num { color: var(--info); }
+  .kpi .bar { position: absolute; top: 0; left: 0; height: 2px; width: 30%; }
+  .kpi.critical .bar { background: var(--critical); }
+  .kpi.major .bar { background: var(--major); }
+  .kpi.minor .bar { background: var(--minor); }
+  .kpi.ok .bar { background: var(--ok); }
+  .kpi.info .bar { background: var(--info); }
+
+  /* SECTION TITLE */
+  .section-title {
+    font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.18em;
+    text-transform: uppercase; color: var(--accent); font-weight: 600;
+    margin: 36px 0 14px; padding-bottom: 8px; border-bottom: 1px solid var(--border);
+    display: flex; justify-content: space-between; align-items: baseline;
+  }
+  .section-title .hint { color: var(--text-muted); font-size: 10px; letter-spacing: 0.08em; text-transform: none; font-style: italic; font-family: var(--font-display); }
+
+  /* COMPLIANCE MATRIX */
+  .matrix-wrap { border: 1px solid var(--border); background: var(--bg-elev-1); overflow-x: auto; }
+  table.matrix { width: 100%; border-collapse: collapse; font-size: 12px; min-width: 880px; }
+  .matrix th {
+    background: var(--bg-elev-2); padding: 10px 8px; font-family: var(--font-mono);
+    font-size: 9.5px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-muted);
+    font-weight: 600; border-bottom: 1px solid var(--border); border-left: 1px solid var(--border);
+    text-align: center; vertical-align: bottom; line-height: 1.3;
+  }
+  .matrix th.row-head { text-align: left; min-width: 220px; }
+  .matrix td {
+    padding: 9px 8px; border-bottom: 1px solid var(--border); border-left: 1px solid var(--border);
+    text-align: center; vertical-align: middle;
+  }
+  .matrix td.row-head {
+    text-align: left; color: var(--text-primary); font-weight: 500; font-size: 12.5px;
+  }
+  .matrix td.row-head .ref { display: block; font-family: var(--font-mono); font-size: 10px; color: var(--text-muted); margin-top: 2px; }
+  .cell {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 100%; height: 30px; border-radius: 3px; font-family: var(--font-mono);
+    font-size: 10px; font-weight: 600; letter-spacing: 0.04em; cursor: default;
+    transition: transform 0.1s ease;
+  }
+  .cell:hover { transform: scale(1.08); }
+  .cell.compliant { background: var(--ok-bg); color: var(--ok); border: 1px solid var(--ok); }
+  .cell.partial   { background: var(--minor-bg); color: var(--minor); border: 1px solid var(--minor); }
+  .cell.gap       { background: var(--critical-bg); color: var(--critical); border: 1px solid var(--critical); }
+  .cell.major     { background: var(--major-bg); color: var(--major); border: 1px solid var(--major); }
+  .cell.na        { background: transparent; color: var(--na); border: 1px dashed var(--na); }
+  .matrix-legend { display: flex; gap: 18px; flex-wrap: wrap; margin-top: 12px; font-family: var(--font-mono); font-size: 11px; color: var(--text-secondary); }
+  .matrix-legend span { display: inline-flex; align-items: center; gap: 6px; }
+  .matrix-legend .dot { width: 11px; height: 11px; border-radius: 2px; border: 1px solid; }
+  .dot.compliant { background: var(--ok-bg); border-color: var(--ok); }
+  .dot.partial { background: var(--minor-bg); border-color: var(--minor); }
+  .dot.major { background: var(--major-bg); border-color: var(--major); }
+  .dot.gap { background: var(--critical-bg); border-color: var(--critical); }
+  .dot.na { background: transparent; border-color: var(--na); border-style: dashed; }
+
+  /* FILTER BAR */
+  .filter-bar { display: flex; gap: 8px; align-items: center; margin-bottom: 16px; flex-wrap: wrap; }
+  .filter-bar .label { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.15em; text-transform: uppercase; color: var(--text-muted); margin-right: 4px; }
+  .pill {
+    background: var(--bg-elev-1); border: 1px solid var(--border); color: var(--text-secondary);
+    padding: 6px 12px; font-size: 12px; font-family: var(--font-mono); font-weight: 500;
+    cursor: pointer; transition: all 0.15s ease; border-radius: 3px; letter-spacing: 0.03em;
+  }
+  .pill:hover { border-color: var(--border-strong); color: var(--text-primary); }
+  .pill.active { border-color: var(--accent); color: var(--accent); background: rgba(212, 165, 116, 0.06); }
+  .pill .count { margin-left: 6px; opacity: 0.6; font-size: 10px; }
+
+  /* GAP REGISTER TABLE */
+  .table-wrapper { border: 1px solid var(--border); background: var(--bg-elev-1); overflow: hidden; }
+  table.register { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .register thead th {
+    background: var(--bg-elev-2); text-align: left; padding: 12px 14px; font-family: var(--font-mono);
+    font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-muted);
+    font-weight: 600; border-bottom: 1px solid var(--border); white-space: nowrap; cursor: pointer; user-select: none;
+  }
+  .register thead th:hover { color: var(--accent); }
+  .register thead th.sort-asc::after { content: ' ▲'; color: var(--accent); }
+  .register thead th.sort-desc::after { content: ' ▼'; color: var(--accent); }
+  .register tbody tr { border-bottom: 1px solid var(--border); cursor: pointer; transition: background 0.12s ease; }
+  .register tbody tr:hover { background: var(--bg-elev-2); }
+  .register tbody tr.expanded { background: var(--bg-elev-2); }
+  .register tbody td { padding: 14px; vertical-align: top; color: var(--text-secondary); }
+  .register .id-cell { font-family: var(--font-mono); font-size: 11px; color: var(--text-muted); font-weight: 600; }
+  .register .req { color: var(--text-primary); font-weight: 500; }
+  .register .req-ref { display: block; font-family: var(--font-mono); font-size: 10px; color: var(--accent); margin-top: 3px; }
+  .badge { display: inline-block; padding: 3px 8px; font-family: var(--font-mono); font-size: 10px; font-weight: 600; letter-spacing: 0.08em; border-radius: 2px; text-transform: uppercase; border: 1px solid; }
+  .badge.critical { color: var(--critical); border-color: var(--critical); background: var(--critical-bg); }
+  .badge.major { color: var(--major); border-color: var(--major); background: var(--major-bg); }
+  .badge.minor { color: var(--minor); border-color: var(--minor); background: var(--minor-bg); }
+  .badge.status-open { color: var(--major); border-color: var(--major); background: var(--major-bg); }
+  .badge.status-progress { color: var(--info); border-color: var(--info); background: var(--info-bg); }
+  .badge.status-closed { color: var(--ok); border-color: var(--ok); background: var(--ok-bg); }
+
+  /* DETAIL EXPAND */
+  tr.detail-row { display: none; }
+  tr.detail-row.open { display: table-row; }
+  tr.detail-row td { background: var(--bg-elev-2); padding: 20px 24px 24px; border-top: 1px solid var(--border-strong); }
+  .detail-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 24px; }
+  .detail-block h4 {
+    font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.15em; text-transform: uppercase;
+    color: var(--accent); font-weight: 600; margin-bottom: 8px; padding-bottom: 6px; border-bottom: 1px solid var(--border);
+  }
+  .detail-block p { color: var(--text-secondary); font-size: 12.5px; line-height: 1.6; }
+  .detail-block .kv { display: flex; justify-content: space-between; padding: 4px 0; font-size: 12px; border-bottom: 1px dashed var(--border); }
+  .detail-block .kv:last-child { border-bottom: none; }
+  .detail-block .kv .k { color: var(--text-muted); font-family: var(--font-mono); font-size: 11px; }
+  .detail-block .kv .v { color: var(--text-primary); font-weight: 500; text-align: right; }
+  .citation-chip { display: inline-block; margin: 4px 4px 0 0; font-family: var(--font-mono); font-size: 11px; color: var(--text-secondary); background: var(--bg-elev-3); border: 1px solid var(--border); padding: 3px 8px; border-radius: 2px; }
+  .citation-chip .doc { color: var(--accent); margin-right: 4px; }
+  .evidence-tax { display: inline-block; padding: 2px 6px; font-family: var(--font-mono); font-size: 10px; font-weight: 600; letter-spacing: 0.08em; border-radius: 2px; }
+  .ev-CONFIRMED { color: var(--ok); background: var(--ok-bg); }
+  .ev-SUPPORTED { color: var(--info); background: var(--info-bg); }
+  .ev-INFERRED { color: var(--minor); background: var(--minor-bg); }
+  .ev-SPECULATIVE { color: var(--major); background: var(--major-bg); }
+
+  /* INCONSISTENCY CARDS */
+  .inc-grid { display: grid; grid-template-columns: 1fr; gap: 16px; }
+  .inc-card { background: var(--bg-elev-1); border: 1px solid var(--border); border-left: 3px solid var(--major); padding: 20px 24px; }
+  .inc-card .inc-head { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
+  .inc-card .inc-id { font-family: var(--font-mono); font-size: 11px; color: var(--major); font-weight: 600; }
+  .inc-card .inc-title { font-family: var(--font-display); font-size: 16px; color: var(--text-primary); font-weight: 600; }
+  .triangulation { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1px; background: var(--border); border: 1px solid var(--border); margin-bottom: 14px; }
+  .tri-cell { background: var(--bg-elev-2); padding: 14px; }
+  .tri-cell .tri-src { font-family: var(--font-mono); font-size: 9.5px; letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 8px; font-weight: 600; }
+  .tri-cell.supplier .tri-src { color: var(--info); }
+  .tri-cell.analytical .tri-src { color: var(--accent); }
+  .tri-cell.tox .tri-src { color: var(--major); }
+  .tri-cell .tri-claim { color: var(--text-secondary); font-size: 12px; line-height: 1.5; }
+  .tri-cell .tri-cite { display: block; font-family: var(--font-mono); font-size: 9.5px; color: var(--text-muted); margin-top: 8px; }
+  .inc-resolution { font-size: 12.5px; color: var(--text-secondary); }
+  .inc-resolution strong { color: var(--accent); font-weight: 600; }
+
+  /* LEGEND FOOTER */
+  .legend { margin-top: 32px; padding: 24px; background: var(--bg-elev-1); border: 1px solid var(--border); display: grid; grid-template-columns: 1fr 1fr; gap: 28px; }
+  .legend h4 { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--accent); font-weight: 600; margin-bottom: 12px; }
+  .legend .doc-row, .legend .ev-row { font-family: var(--font-mono); font-size: 11px; color: var(--text-secondary); padding: 4px 0; border-bottom: 1px dashed var(--border); }
+  .legend .doc-row .doc { color: var(--accent); font-weight: 600; }
+
+  .doc-footer { margin-top: 32px; padding-top: 20px; border-top: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; font-family: var(--font-mono); font-size: 11px; color: var(--text-muted); }
+  .doc-footer .confidential { color: var(--accent); letter-spacing: 0.1em; }
+
+  @media (max-width: 980px) {
+    .kpi-strip { grid-template-columns: repeat(2, 1fr); }
+    .detail-grid { grid-template-columns: 1fr; }
+    .triangulation { grid-template-columns: 1fr; }
+    .legend { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+<div class="grid-overlay"></div>
+<div class="container">
+
+  <header class="masthead">
+    <div>
+      <div class="eyebrow">Artifact 02  ·  Extractables &amp; Leachables  ·  QA / RA Workflow</div>
+      <h1>Regulatory Gap Assessment</h1>
+      <div class="subtitle">NVT-217 (tenelizumab) - Compliance posture vs current E&amp;L guidance</div>
+    </div>
+    <div class="meta-panel">
+      <div>Sponsor  <span class="value">NovaTera Biologics AG</span></div>
+      <div>Assessment basis  <span class="value">RA-001 v2.0</span></div>
+      <div>Target  <span class="value">BLA readiness</span></div>
+      <div>Cut-off  <span class="value">31 Jan 2026</span></div>
+      <div class="ai-tag">AI-assisted synthesis  ·  cite sources</div>
+    </div>
+  </header>
+
+  <!-- KPI STRIP -->
+  <div class="kpi-strip">
+    <div class="kpi critical"><span class="bar"></span><div class="num" id="kpi-crit">1</div><div class="lbl">Critical gaps</div></div>
+    <div class="kpi major"><span class="bar"></span><div class="num" id="kpi-major">4</div><div class="lbl">Major gaps</div></div>
+    <div class="kpi minor"><span class="bar"></span><div class="num" id="kpi-minor">3</div><div class="lbl">Minor gaps</div></div>
+    <div class="kpi info"><span class="bar"></span><div class="num" id="kpi-inc">3</div><div class="lbl">Cross-source inconsistencies</div></div>
+    <div class="kpi ok"><span class="bar"></span><div class="num" id="kpi-comp">53%</div><div class="lbl">Matrix cells compliant</div></div>
+  </div>
+
+  <!-- COMPLIANCE MATRIX -->
+  <div class="section-title">Compliance coverage matrix <span class="hint">guidance vs assessment dimension - hover a cell for the verdict</span></div>
+  <div class="matrix-wrap">
+    <table class="matrix" id="matrix">
+      <thead>
+        <tr>
+          <th class="row-head">Guidance / Standard</th>
+          <th>Study<br>design</th>
+          <th>Threshold<br>(AET / PDE)</th>
+          <th>Compound<br>identification</th>
+          <th>Tox<br>assessment</th>
+          <th>Data<br>completeness</th>
+          <th>Change<br>control</th>
+        </tr>
+      </thead>
+      <tbody id="matrix-body"></tbody>
+    </table>
+  </div>
+  <div class="matrix-legend">
+    <span><span class="dot compliant"></span> Compliant</span>
+    <span><span class="dot partial"></span> Partial</span>
+    <span><span class="dot major"></span> Major gap</span>
+    <span><span class="dot gap"></span> Critical gap</span>
+    <span><span class="dot na"></span> Not applicable</span>
+  </div>
+
+  <!-- GAP REGISTER -->
+  <div class="section-title">Gap register <span class="hint">click a row to expand evidence, basis, and recommended action</span></div>
+  <div class="filter-bar">
+    <span class="label">Filter severity:</span>
+    <button class="pill active" data-filter="all">All <span class="count" id="cnt-all"></span></button>
+    <button class="pill" data-filter="CRITICAL">Critical <span class="count" id="cnt-CRITICAL"></span></button>
+    <button class="pill" data-filter="MAJOR">Major <span class="count" id="cnt-MAJOR"></span></button>
+    <button class="pill" data-filter="MINOR">Minor <span class="count" id="cnt-MINOR"></span></button>
+  </div>
+  <div class="table-wrapper">
+    <table class="register" id="register">
+      <thead>
+        <tr>
+          <th data-sort="id">Gap</th>
+          <th data-sort="req">Requirement</th>
+          <th data-sort="severity">Severity</th>
+          <th data-sort="status">Status</th>
+          <th data-sort="capa">CAPA link</th>
+        </tr>
+      </thead>
+      <tbody id="register-body"></tbody>
+    </table>
+  </div>
+
+  <!-- INCONSISTENCIES -->
+  <div class="section-title">Cross-source inconsistencies <span class="hint">supplier declaration vs analytical finding vs toxicological assessment</span></div>
+  <div class="inc-grid" id="inc-grid"></div>
+
+  <!-- LEGEND -->
+  <div class="legend">
+    <div>
+      <h4>Source documents - traceability</h4>
+      <div class="doc-row"><span class="doc">NVT-217-CCS-001</span> v2.0  ·  Container Closure System Description</div>
+      <div class="doc-row"><span class="doc">NVT-217-ES-001</span> v1.1  ·  Extractables Study Report</div>
+      <div class="doc-row"><span class="doc">NVT-217-LS-002</span> v1.0  ·  Leachables Stability, 24M interim</div>
+      <div class="doc-row"><span class="doc">NVT-217-RA-001</span> v2.0  ·  Internal E&amp;L Risk Assessment</div>
+      <div class="doc-row"><span class="doc">ESM-CN-2025-014</span>  ·  Supplier Change Notification</div>
+    </div>
+    <div>
+      <h4>Evidence taxonomy &amp; confidence</h4>
+      <div class="ev-row"><span class="evidence-tax ev-CONFIRMED">CONFIRMED</span>  Verified against standard or independent method</div>
+      <div class="ev-row"><span class="evidence-tax ev-SUPPORTED">SUPPORTED</span>  Multiple consistent data points; documented</div>
+      <div class="ev-row"><span class="evidence-tax ev-INFERRED">INFERRED</span>  Reasoned from composition or guidance text</div>
+      <div class="ev-row"><span class="evidence-tax ev-SPECULATIVE">SPECULATIVE</span>  Tentative; flagged for follow-up</div>
+    </div>
+  </div>
+
+  <div class="doc-footer">
+    <div>Generated by Claude  ·  E&amp;L Scientific Copilot  ·  Synthesis from project knowledge</div>
+    <div class="confidential">CONFIDENTIAL  ·  AI output requires QA / RA review</div>
+  </div>
+
+</div>
+
+<script>
+// =================== MATRIX DATA ===================
+// status: compliant | partial | major | gap | na
+const MATRIX = [
+  { g: "ICH Q3E (draft, Step 2, Jul 2025)", ref: "E&L harmonised guideline",
+    cells: ["compliant","compliant","partial","partial","major","major"] },
+  { g: "ICH M7(R2) + addendum", ref: "Mutagenic impurities / AI",
+    cells: ["compliant","partial","compliant","gap","partial","na"] },
+  { g: "ICH Q3D(R2)", ref: "Elemental impurities (PDE)",
+    cells: ["compliant","compliant","compliant","compliant","compliant","na"] },
+  { g: "ICH Q3C(R8)", ref: "Residual solvents",
+    cells: ["compliant","compliant","compliant","compliant","compliant","na"] },
+  { g: "USP <1663> / <1664>", ref: "Extractables / AET",
+    cells: ["compliant","compliant","partial","compliant","partial","na"] },
+  { g: "FDA Container Closure (1999)", ref: "CCS suitability",
+    cells: ["compliant","compliant","compliant","compliant","partial","partial"] },
+  { g: "FDA / EMA Nitrosamines", ref: "2021 guidance / Q&A Rev.21",
+    cells: ["partial","partial","compliant","gap","major","major"] },
+  { g: "ISO 10993-17 / -18", ref: "Tox risk / chemical characterization",
+    cells: ["compliant","partial","partial","partial","partial","na"] },
+];
+
+const CELL_LABEL = { compliant: "OK", partial: "PART", major: "MAJOR", gap: "CRIT", na: "N/A" };
+const CELL_TITLE = {
+  compliant: "Compliant - requirement met and documented",
+  partial: "Partial - addressed but with documented limitation",
+  major: "Major gap - significant action required",
+  gap: "Critical gap - blocks submission until resolved",
+  na: "Not applicable to this dimension"
+};
+
+// =================== GAP REGISTER DATA ===================
+const SEV_ORDER = { CRITICAL: 0, MAJOR: 1, MINOR: 2 };
+const STATUS_ORDER = { Open: 0, "In progress": 1, Closed: 2 };
+
+const GAPS = [
+  {
+    id: "GAP-01", severity: "CRITICAL", status: "Open", capa: "CAPA-2026-002",
+    req: "Nitrosamine exceedance requires formal risk evaluation and regulatory notification strategy",
+    reqRef: "ICH M7(R2) · FDA Nitrosamine Guidance 2021 · EMA Q&A Rev.21",
+    current: "NDBA confirmed in drug product at 8 ng/mL (24M), exceeding the compound-specific AI-derived limit (2.2 ng/mL) by ~3.6x. Mitigation is identified (supplier change BR-540F-Eco) but no formal notification strategy or timeline is documented.",
+    gap: "No documented regulatory engagement plan (FDA/EMA notification timing) and no interim control strategy for material already manufactured with the current stopper grade.",
+    evidence: "CONFIRMED", confidence: "HIGH",
+    action: "Develop and document a regulatory notification plan; define an interim risk-management position for released/in-stability material; align mitigation timing (BR-540F-Eco availability Q2 2026) with the BLA filing strategy.",
+    citations: [
+      { doc: "NVT-217-LS-002", section: "§4.1 NDBA kinetics" },
+      { doc: "NVT-217-RA-001", section: "§6 mitigation; §7 residual risk" },
+      { doc: "ESM-CN-2025-014", section: "§3 rationale" }
+    ]
+  },
+  {
+    id: "GAP-02", severity: "MAJOR", status: "Open", capa: "CAPA-2025-031",
+    req: "Leachables data must support the full claimed shelf life",
+    reqRef: "ICH Q3E (draft) §5 · stability principles",
+    current: "Leachables stability study reports 24 of 36 months. NDBA and MBT are both trending upward at the 24M readout.",
+    gap: "End-of-shelf-life (36M) leachables levels are not yet measured; current position relies on linear extrapolation, which is an assumption rather than data.",
+    evidence: "CONFIRMED", confidence: "HIGH",
+    action: "Complete the 30M and 36M timepoints (protocol amendment v2.0 already issued); replace linear extrapolation with an Arrhenius-supported kinetic model leveraging the 25C accelerated arm.",
+    citations: [
+      { doc: "NVT-217-LS-002", section: "§2 design; §5 limitations" },
+      { doc: "NVT-217-RA-001", section: "CAPA-2025-031" }
+    ]
+  },
+  {
+    id: "GAP-03", severity: "MAJOR", status: "In progress", capa: "RA-001 v2.0",
+    req: "Risk assessment must reflect the current regulatory framework",
+    reqRef: "ICH Q3E (draft) · ICH M7(R2) addendum",
+    current: "Risk assessment v1.0 (Dec 2023) predated both the ICH Q3E draft (Jul 2025) and the ICH M7(R2) addendum. Version 2.0 (Feb 2026) was issued to re-baseline.",
+    gap: "The re-baseline to v2.0 is recent; downstream documents (dossier sections, study reports) must be checked for alignment with the updated framework and the new compound-specific AI methodology.",
+    evidence: "SUPPORTED", confidence: "MEDIUM",
+    action: "Perform a documentation alignment sweep against RA-001 v2.0; confirm extractables report (ES-001) and leachables report (LS-002) conclusions remain valid under the updated framework.",
+    citations: [
+      { doc: "NVT-217-RA-001", section: "§1 purpose; F-06" }
+    ]
+  },
+  {
+    id: "GAP-04", severity: "MAJOR", status: "Open", capa: "CAPA-2026-004",
+    req: "Compound-specific Acceptable Intake methodology must be integrated into the toxicological rationale",
+    reqRef: "ICH M7(R2) addendum (Step 5, 2024)",
+    current: "The NDBA limit currently uses an industry-applied AI (26.5 ng/day). The addendum methodology and any regulatory-endorsed AI for NDBA are not yet formally integrated into the tox rationale.",
+    gap: "Toxicological basis for the NDBA limit is provisional; the derivation must be reconciled with the addendum approach and documented for the dossier.",
+    evidence: "INFERRED", confidence: "MEDIUM",
+    action: "Toxicology to formalise the AI derivation per the M7(R2) addendum; document read-across or compound-specific data sources; confirm the applied 26.5 ng/day value against the latest regulatory position.",
+    citations: [
+      { doc: "NVT-217-ES-001", section: "§3 threshold derivation (note)" },
+      { doc: "NVT-217-RA-001", section: "CAPA-2026-004" }
+    ]
+  },
+  {
+    id: "GAP-05", severity: "MAJOR", status: "Open", capa: "new",
+    req: "Analytical panel must cover nitrosamines relevant to the (planned) material",
+    reqRef: "ICH M7(R2) cohort of concern · FDA Nitrosamine Guidance 2021",
+    current: "The current targeted panel covers 11 N-nitrosamines. The planned supplier change introduces ZBEC accelerator with a dibenzylamine moiety, a precursor for N-nitroso-dibenzylamine (NDBzA), which is NOT in the panel.",
+    gap: "Forward-looking analytical gap: any evaluation of BR-540F-Eco will be blind to NDBzA unless the panel is extended and a method validated.",
+    evidence: "INFERRED", confidence: "MEDIUM",
+    action: "Extend the targeted nitrosamine panel to include NDBzA and validate the method prior to any BR-540F-Eco extractables/leachables work; request supplier dibenzylamine residual data.",
+    citations: [
+      { doc: "ESM-CN-2025-014", section: "§4.2 compounds expected to appear" },
+      { doc: "NVT-217-LS-002", section: "§5 panel limitation (NDBzA)" }
+    ]
+  },
+  {
+    id: "GAP-06", severity: "MINOR", status: "Open", capa: "CAPA-2026-003",
+    req: "Compound classification rationale must be documented",
+    reqRef: "ICH M7(R2) · USP <1664>",
+    current: "MBT is provisionally classified as Class 3. It exceeds the TTC-based AET as an extractable (1.20 ug/mL). Classification drives whether a TTC-based or PDE-based limit applies.",
+    gap: "No documented, defensible classification rationale (Class 3 vs Class 5) for MBT; the assessment limit is therefore provisional.",
+    evidence: "SUPPORTED", confidence: "MEDIUM",
+    action: "Derive a compound-specific PDE from rodent chronic data (NTP); run Q-SAR (Derek, Sarah); toxicologist to issue a documented classification decision.",
+    citations: [
+      { doc: "NVT-217-ES-001", section: "§5.2 MBT discussion" },
+      { doc: "NVT-217-RA-001", section: "§3 row E-02; CAPA-2026-003" }
+    ]
+  },
+  {
+    id: "GAP-07", severity: "MINOR", status: "Open", capa: "procedural",
+    req: "Supplier change control procedure must align with current guidance",
+    reqRef: "ICH Q3E (draft) §6",
+    current: "Supplier change notification (ESM-CN-2025-014) was received Sep 2025 and is under evaluation. The internal change-control procedure was written before the ICH Q3E draft.",
+    gap: "Procedure does not yet reference the ICH Q3E change-management expectations for E&L re-qualification.",
+    evidence: "INFERRED", confidence: "MEDIUM",
+    action: "Update the change-control SOP to reference ICH Q3E (draft) §6; ensure comparative extractables study and leachables bridging are mandated for material changes.",
+    citations: [
+      { doc: "NVT-217-RA-001", section: "F-05" },
+      { doc: "ESM-CN-2025-014", section: "§5 required customer actions" }
+    ]
+  },
+  {
+    id: "GAP-08", severity: "MINOR", status: "Open", capa: "ES-001 follow-up",
+    req: "Reported extractables should be identified with adequate confidence",
+    reqRef: "USP <1663> identification tiers",
+    current: "Two extractables (E-08 bisphenol F, E-09 cyclic COP oligomer) are reported as tentatively identified (no reference standard).",
+    gap: "Tentative IDs carry LOW confidence; if confirmed, E-08 (bisphenol family) could carry an endocrine-activity concern requiring its own assessment.",
+    evidence: "SPECULATIVE", confidence: "LOW",
+    action: "Procure reference standards or perform higher-resolution MS/MS confirmation; if confirmed, derive compound-specific assessments; if not, retract from the register with documented justification.",
+    citations: [
+      { doc: "NVT-217-ES-001", section: "§4 rows E-08/E-09; §7 limitations" }
+    ]
+  }
+];
+
+// =================== INCONSISTENCY DATA ===================
+const INCONSISTENCIES = [
+  {
+    id: "INC-01",
+    title: "NDBA reduction claim is forward-looking and unverified",
+    supplier: { claim: "BR-540F-Eco removes the DBA precursor; ElastoSeal data show greater than 95% reduction of NDBA.", cite: "ESM-CN-2025-014 §4.1" },
+    analytical: { claim: "Current grade BR-540F shows NDBA at 20 ng/mL (extractable) and 8 ng/mL (leachable, 24M), both above limit.", cite: "ES-001 §5.1 · LS-002 §4.1" },
+    tox: { claim: "Residual NDBA in the new grade is not quantified; a >95% reduction from an unstated baseline does not guarantee the result falls below 2.2 ng/mL.", cite: "RA-001 §7" },
+    resolution: "The supplier reduction claim applies to the NEW grade and has not been verified under sponsor conditions. Action: require quantified residual NDBA data for BR-540F-Eco and confirm against the 2.2 ng/mL limit before relying on the change as mitigation."
+  },
+  {
+    id: "INC-02",
+    title: "Supplier recommends NDBzA screening, but no sponsor method exists",
+    supplier: { claim: "Dibenzylamine present; ElastoSeal LOD less than 2 ng/g; NDBzA screening recommended.", cite: "ESM-CN-2025-014 §4.2" },
+    analytical: { claim: "Sponsor targeted nitrosamine panel covers 11 compounds; NDBzA is not included and no validated method is in place.", cite: "LS-002 §5" },
+    tox: { claim: "NDBzA would fall within the ICH M7 cohort of concern if formed; absence of a method means the hazard cannot currently be excluded.", cite: "RA-001 §3 (inferred)" },
+    resolution: "A supplier recommendation to screen cannot be actioned without analytical capability. Action: extend and validate the panel for NDBzA (links to GAP-05) before any BR-540F-Eco qualification work."
+  },
+  {
+    id: "INC-03",
+    title: "MBT disposition differs across the three sources",
+    supplier: { claim: "MBT levels listed as unchanged between BR-540F and BR-540F-Eco.", cite: "ESM-CN-2025-014 §4.3" },
+    analytical: { claim: "MBT measured at 1.20 ug/mL (extractable), exceeding the TTC-based AET of 0.83 ug/mL; leachable trending upward.", cite: "ES-001 §5.2 · LS-002 §4.2" },
+    tox: { claim: "Classification (Class 3 vs Class 5) is unresolved, so it is not yet possible to state whether the exceedance is toxicologically meaningful.", cite: "RA-001 §3 row E-02" },
+    resolution: "The three sources are not contradictory but are unaligned on risk disposition: the supplier treats MBT as a non-issue (unchanged), analytics flag an AET exceedance, and toxicology cannot yet conclude. Action: resolve the classification (GAP-06) to align the disposition."
+  }
+];
+
+// =================== RENDER ===================
+const matrixBody = document.getElementById('matrix-body');
+const regBody = document.getElementById('register-body');
+const incGrid = document.getElementById('inc-grid');
+let activeFilter = 'all';
+let sortKey = 'severity';
+let sortDir = 'asc';
+
+// Matrix
+function renderMatrix() {
+  matrixBody.innerHTML = MATRIX.map(row => {
+    const cells = row.cells.map(c =>
+      `<td><span class="cell ${c}" title="${CELL_TITLE[c]}">${CELL_LABEL[c]}</span></td>`
+    ).join('');
+    return `<tr><td class="row-head">${row.g}<span class="ref">${row.ref}</span></td>${cells}</tr>`;
+  }).join('');
+}
+
+// Compute compliant percentage (exclude N/A)
+function computeCompliancePct() {
+  let total = 0, compliant = 0;
+  MATRIX.forEach(r => r.cells.forEach(c => {
+    if (c !== 'na') { total++; if (c === 'compliant') compliant++; }
+  }));
+  return Math.round(100 * compliant / total);
+}
+
+// Gap register
+function badge(sev) { return `<span class="badge ${sev.toLowerCase()}">${sev}</span>`; }
+function statusBadge(s) {
+  const cls = s === 'Open' ? 'status-open' : (s === 'Closed' ? 'status-closed' : 'status-progress');
+  return `<span class="badge ${cls}">${s}</span>`;
+}
+function citationChips(cs) { return cs.map(c => `<span class="citation-chip"><span class="doc">${c.doc}</span>${c.section}</span>`).join(''); }
+
+function renderGapRow(row) {
+  return `
+    <tr data-id="${row.id}" data-sev="${row.severity}">
+      <td class="id-cell">${row.id}</td>
+      <td><span class="req">${row.req}</span><span class="req-ref">${row.reqRef}</span></td>
+      <td>${badge(row.severity)}</td>
+      <td>${statusBadge(row.status)}</td>
+      <td><span style="font-family:var(--font-mono);font-size:11px;color:var(--text-secondary)">${row.capa}</span></td>
+    </tr>
+    <tr class="detail-row" data-id="${row.id}-detail">
+      <td colspan="5">
+        <div class="detail-grid">
+          <div class="detail-block">
+            <h4>Current state</h4>
+            <p>${row.current}</p>
+          </div>
+          <div class="detail-block">
+            <h4>Gap</h4>
+            <p>${row.gap}</p>
+            <div class="kv" style="margin-top:10px"><span class="k">Evidence</span><span class="v"><span class="evidence-tax ev-${row.evidence}">${row.evidence}</span></span></div>
+            <div class="kv"><span class="k">Confidence</span><span class="v">${row.confidence}</span></div>
+          </div>
+          <div class="detail-block">
+            <h4>Recommended action</h4>
+            <p>${row.action}</p>
+            <h4 style="margin-top:14px">Source citations</h4>
+            <div>${citationChips(row.citations)}</div>
+          </div>
+        </div>
+      </td>
+    </tr>`;
+}
+
+function applySortFilter() {
+  let rows = [...GAPS];
+  if (activeFilter !== 'all') rows = rows.filter(r => r.severity === activeFilter);
+  rows.sort((a, b) => {
+    let av, bv;
+    if (sortKey === 'severity') { av = SEV_ORDER[a.severity]; bv = SEV_ORDER[b.severity]; }
+    else if (sortKey === 'status') { av = STATUS_ORDER[a.status]; bv = STATUS_ORDER[b.status]; }
+    else { av = (a[sortKey] || '').toString(); bv = (b[sortKey] || '').toString(); }
+    if (av < bv) return sortDir === 'asc' ? -1 : 1;
+    if (av > bv) return sortDir === 'asc' ? 1 : -1;
+    return 0;
+  });
+  regBody.innerHTML = rows.map(renderGapRow).join('');
+  document.querySelectorAll('th[data-sort]').forEach(th => {
+    th.classList.remove('sort-asc', 'sort-desc');
+    if (th.dataset.sort === sortKey) th.classList.add(sortDir === 'asc' ? 'sort-asc' : 'sort-desc');
+  });
+}
+
+// Inconsistencies
+function renderInconsistencies() {
+  incGrid.innerHTML = INCONSISTENCIES.map(inc => `
+    <div class="inc-card">
+      <div class="inc-head">
+        <span class="inc-id">${inc.id}</span>
+        <span class="inc-title">${inc.title}</span>
+      </div>
+      <div class="triangulation">
+        <div class="tri-cell supplier">
+          <div class="tri-src">Supplier declaration</div>
+          <div class="tri-claim">${inc.supplier.claim}</div>
+          <span class="tri-cite">${inc.supplier.cite}</span>
+        </div>
+        <div class="tri-cell analytical">
+          <div class="tri-src">Analytical finding</div>
+          <div class="tri-claim">${inc.analytical.claim}</div>
+          <span class="tri-cite">${inc.analytical.cite}</span>
+        </div>
+        <div class="tri-cell tox">
+          <div class="tri-src">Toxicological assessment</div>
+          <div class="tri-claim">${inc.tox.claim}</div>
+          <span class="tri-cite">${inc.tox.cite}</span>
+        </div>
+      </div>
+      <div class="inc-resolution"><strong>Resolution path:</strong> ${inc.resolution}</div>
+    </div>
+  `).join('');
+}
+
+// Counts + KPIs
+function updateCounts() {
+  document.getElementById('cnt-all').textContent = `(${GAPS.length})`;
+  ['CRITICAL','MAJOR','MINOR'].forEach(s => {
+    document.getElementById('cnt-' + s).textContent = `(${GAPS.filter(r => r.severity === s).length})`;
+  });
+  document.getElementById('kpi-crit').textContent = GAPS.filter(r => r.severity === 'CRITICAL').length;
+  document.getElementById('kpi-major').textContent = GAPS.filter(r => r.severity === 'MAJOR').length;
+  document.getElementById('kpi-minor').textContent = GAPS.filter(r => r.severity === 'MINOR').length;
+  document.getElementById('kpi-inc').textContent = INCONSISTENCIES.length;
+  document.getElementById('kpi-comp').textContent = computeCompliancePct() + '%';
+}
+
+// Events
+document.querySelectorAll('.pill').forEach(p => p.addEventListener('click', () => {
+  document.querySelectorAll('.pill').forEach(x => x.classList.remove('active'));
+  p.classList.add('active');
+  activeFilter = p.dataset.filter;
+  applySortFilter();
+}));
+document.querySelectorAll('th[data-sort]').forEach(th => th.addEventListener('click', () => {
+  if (sortKey === th.dataset.sort) sortDir = (sortDir === 'asc' ? 'desc' : 'asc');
+  else { sortKey = th.dataset.sort; sortDir = 'asc'; }
+  applySortFilter();
+}));
+regBody.addEventListener('click', (e) => {
+  const tr = e.target.closest('tr[data-id]');
+  if (!tr || tr.classList.contains('detail-row')) return;
+  const id = tr.dataset.id;
+  const detail = regBody.querySelector(`tr[data-id="${id}-detail"]`);
+  const isOpen = detail.classList.contains('open');
+  regBody.querySelectorAll('tr.detail-row.open').forEach(d => d.classList.remove('open'));
+  regBody.querySelectorAll('tr.expanded').forEach(d => d.classList.remove('expanded'));
+  if (!isOpen) { detail.classList.add('open'); tr.classList.add('expanded'); }
+});
+
+renderMatrix();
+renderInconsistencies();
+updateCounts();
+applySortFilter();
+</script>
+</body>
+</html>

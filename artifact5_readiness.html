@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NVT-217 - Regulatory Readiness Assessment</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Serif:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg-base: #0a0e16;
+    --bg-elev-1: #11161f;
+    --bg-elev-2: #161c28;
+    --bg-elev-3: #1c2331;
+    --border: #2a3245;
+    --border-strong: #3a4356;
+    --text-primary: #e8e6e0;
+    --text-secondary: #b4b8c5;
+    --text-muted: #6b7184;
+    --accent: #d4a574;
+    --critical: #ef4444;
+    --critical-bg: rgba(239, 68, 68, 0.08);
+    --major: #f97316;
+    --major-bg: rgba(249, 115, 22, 0.08);
+    --minor: #eab308;
+    --minor-bg: rgba(234, 179, 8, 0.08);
+    --ok: #10b981;
+    --ok-bg: rgba(16, 185, 129, 0.08);
+    --info: #06b6d4;
+    --info-bg: rgba(6, 182, 212, 0.08);
+    --violet: #a78bfa;
+    --font-display: 'IBM Plex Serif', Georgia, serif;
+    --font-body: 'IBM Plex Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+    --font-mono: 'IBM Plex Mono', 'SF Mono', Menlo, monospace;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { background: var(--bg-base); color: var(--text-primary); font-family: var(--font-body); font-size: 14px; line-height: 1.55; -webkit-font-smoothing: antialiased; min-height: 100vh; }
+  body { background-image: radial-gradient(ellipse at top, rgba(212,165,116,0.04) 0%, transparent 50%), radial-gradient(ellipse at bottom right, rgba(6,182,212,0.03) 0%, transparent 60%); background-attachment: fixed; }
+  .grid-overlay { position: fixed; inset: 0; background-image: linear-gradient(rgba(255,255,255,0.012) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.012) 1px, transparent 1px); background-size: 48px 48px; pointer-events: none; z-index: 0; }
+  .container { position: relative; z-index: 1; max-width: 1200px; margin: 0 auto; padding: 32px 28px 64px; }
+
+  header.masthead { border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); padding: 24px 0; display: grid; grid-template-columns: 1fr auto; gap: 24px; align-items: end; margin-bottom: 28px; }
+  .masthead .eyebrow { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--accent); font-weight: 500; margin-bottom: 8px; }
+  .masthead h1 { font-family: var(--font-display); font-weight: 600; font-size: 34px; line-height: 1.15; margin-bottom: 4px; letter-spacing: -0.01em; }
+  .masthead .subtitle { font-family: var(--font-display); font-style: italic; color: var(--text-secondary); font-size: 16px; }
+  .meta-panel { text-align: right; font-family: var(--font-mono); font-size: 11px; color: var(--text-muted); line-height: 1.8; }
+  .meta-panel .value { color: var(--text-secondary); }
+  .ai-tag { display: inline-flex; align-items: center; gap: 6px; background: var(--bg-elev-2); border: 1px solid var(--border); padding: 4px 10px; border-radius: 4px; font-family: var(--font-mono); font-size: 10px; color: var(--accent); margin-top: 6px; }
+  .ai-tag::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 8px var(--accent); }
+
+  /* VERDICT + GAUGE */
+  .verdict-row { display: grid; grid-template-columns: 320px 1fr; gap: 20px; margin-bottom: 28px; }
+  .gauge-card { background: var(--bg-elev-1); border: 1px solid var(--critical); border-radius: 6px; padding: 24px; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+  .gauge { position: relative; width: 200px; height: 110px; margin-bottom: 12px; }
+  .gauge svg { width: 100%; height: 100%; }
+  .gauge .g-score { position: absolute; bottom: 6px; left: 0; right: 0; text-align: center; }
+  .gauge .g-score .num { font-family: var(--font-display); font-size: 40px; font-weight: 600; color: var(--critical); line-height: 1; }
+  .gauge .g-score .den { font-family: var(--font-mono); font-size: 11px; color: var(--text-muted); }
+  .gauge-card .verdict-label { font-family: var(--font-mono); font-weight: 600; font-size: 18px; letter-spacing: 0.04em; color: var(--critical); text-align: center; }
+  .gauge-card .verdict-sub { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.1em; color: var(--text-muted); margin-top: 6px; text-transform: uppercase; }
+
+  .verdict-statement { background: var(--bg-elev-1); border: 1px solid var(--border); border-left: 5px solid var(--critical); border-radius: 6px; padding: 24px 28px; display: flex; flex-direction: column; justify-content: center; }
+  .verdict-statement h2 { font-family: var(--font-display); font-size: 21px; font-weight: 600; margin-bottom: 10px; line-height: 1.3; }
+  .verdict-statement p { color: var(--text-secondary); font-size: 13.5px; line-height: 1.65; }
+  .verdict-statement .hl { color: var(--critical); font-weight: 600; }
+  .verdict-statement .gate { margin-top: 14px; font-family: var(--font-mono); font-size: 12px; color: var(--text-secondary); }
+  .verdict-statement .gate b { color: var(--accent); }
+
+  .section-title { font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--accent); font-weight: 600; margin: 32px 0 14px; padding-bottom: 8px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: baseline; }
+  .section-title .hint { color: var(--text-muted); font-size: 10px; letter-spacing: 0.06em; text-transform: none; font-style: italic; font-family: var(--font-display); }
+
+  /* SCORECARD */
+  .scorecard { display: grid; grid-template-columns: 1fr; gap: 1px; background: var(--border); border: 1px solid var(--border); border-radius: 6px; overflow: hidden; }
+  .score-row { background: var(--bg-elev-1); display: grid; grid-template-columns: 220px 130px 1fr 180px; gap: 18px; padding: 16px 20px; align-items: center; }
+  .score-row .dim { font-weight: 600; color: var(--text-primary); font-size: 13.5px; }
+  .score-row .dim .dim-ref { display: block; font-family: var(--font-mono); font-size: 10px; color: var(--text-muted); margin-top: 3px; font-weight: 400; }
+  .status-pill { font-family: var(--font-mono); font-size: 10px; font-weight: 600; letter-spacing: 0.06em; padding: 4px 10px; border-radius: 3px; border: 1px solid; text-transform: uppercase; text-align: center; }
+  .st-ready { color: var(--ok); border-color: var(--ok); background: var(--ok-bg); }
+  .st-conditional { color: var(--minor); border-color: var(--minor); background: var(--minor-bg); }
+  .st-notready { color: var(--critical); border-color: var(--critical); background: var(--critical-bg); }
+  .score-bar-wrap { display: flex; align-items: center; gap: 12px; }
+  .score-bar { flex: 1; height: 8px; background: var(--bg-elev-3); border-radius: 4px; overflow: hidden; }
+  .score-bar .fill { height: 100%; border-radius: 4px; }
+  .fill.ready { background: var(--ok); }
+  .fill.conditional { background: var(--minor); }
+  .fill.notready { background: var(--critical); }
+  .score-bar-wrap .pct { font-family: var(--font-mono); font-size: 12px; color: var(--text-secondary); min-width: 38px; text-align: right; }
+  .score-row .driver { font-size: 11.5px; color: var(--text-secondary); line-height: 1.45; }
+  .score-row .driver .cite { font-family: var(--font-mono); font-size: 9.5px; color: var(--accent); }
+
+  /* BLOCKING ITEMS */
+  .blocking-grid { display: grid; grid-template-columns: 1fr; gap: 12px; }
+  .block-item { background: var(--bg-elev-1); border: 1px solid var(--border); border-left: 3px solid var(--critical); border-radius: 6px; padding: 16px 20px; display: grid; grid-template-columns: auto 1fr auto; gap: 18px; align-items: center; }
+  .block-item.major { border-left-color: var(--major); }
+  .block-item .bi-id { font-family: var(--font-mono); font-size: 12px; font-weight: 600; color: var(--critical); min-width: 70px; }
+  .block-item.major .bi-id { color: var(--major); }
+  .block-item .bi-body .bi-title { color: var(--text-primary); font-weight: 600; font-size: 13.5px; margin-bottom: 3px; }
+  .block-item .bi-body .bi-desc { font-size: 12px; color: var(--text-secondary); line-height: 1.5; }
+  .block-item .bi-body .bi-cite { font-family: var(--font-mono); font-size: 9.5px; color: var(--text-muted); margin-top: 5px; display: inline-block; }
+  .block-item .bi-status { text-align: right; min-width: 110px; }
+  .block-item .bi-blocking { font-family: var(--font-mono); font-size: 9px; font-weight: 600; letter-spacing: 0.06em; padding: 2px 7px; border-radius: 2px; border: 1px solid var(--critical); color: var(--critical); background: var(--critical-bg); text-transform: uppercase; }
+  .block-item.major .bi-blocking { border-color: var(--major); color: var(--major); background: var(--major-bg); }
+  .block-item .bi-owner { font-family: var(--font-mono); font-size: 10px; color: var(--text-muted); margin-top: 5px; }
+
+  /* FRAMEWORK COVERAGE */
+  .framework-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+  .fw-item { background: var(--bg-elev-1); border: 1px solid var(--border); border-radius: 6px; padding: 14px 18px; display: flex; align-items: center; gap: 14px; }
+  .fw-icon { width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-family: var(--font-mono); font-size: 14px; font-weight: 600; flex-shrink: 0; border: 2px solid; }
+  .fw-icon.met { color: var(--ok); border-color: var(--ok); background: var(--ok-bg); }
+  .fw-icon.partial { color: var(--minor); border-color: var(--minor); background: var(--minor-bg); }
+  .fw-icon.gap { color: var(--critical); border-color: var(--critical); background: var(--critical-bg); }
+  .fw-body .fw-name { font-weight: 600; color: var(--text-primary); font-size: 13px; }
+  .fw-body .fw-note { font-size: 11.5px; color: var(--text-secondary); margin-top: 2px; line-height: 1.4; }
+
+  /* EXIT CRITERIA */
+  .exit-list { background: var(--bg-elev-1); border: 1px solid var(--border); border-radius: 6px; padding: 8px 24px; }
+  .exit { display: grid; grid-template-columns: 28px 1fr auto; gap: 16px; padding: 14px 0; border-bottom: 1px solid var(--border); align-items: start; }
+  .exit:last-child { border-bottom: none; }
+  .exit .x-check { width: 18px; height: 18px; border: 2px solid var(--border-strong); border-radius: 3px; margin-top: 1px; }
+  .exit .x-text { font-size: 13px; color: var(--text-secondary); line-height: 1.5; }
+  .exit .x-text strong { color: var(--text-primary); font-weight: 600; }
+  .exit .x-ref { font-family: var(--font-mono); font-size: 10px; color: var(--accent); white-space: nowrap; }
+
+  /* LEGEND + FOOTER */
+  .legend { margin-top: 32px; padding: 22px 24px; background: var(--bg-elev-1); border: 1px solid var(--border); border-radius: 6px; }
+  .legend h4 { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--accent); font-weight: 600; margin-bottom: 12px; }
+  .legend .doc-row { font-family: var(--font-mono); font-size: 11px; color: var(--text-secondary); padding: 4px 0; border-bottom: 1px dashed var(--border); display: inline-block; width: 100%; }
+  .legend .doc-row .doc { color: var(--accent); font-weight: 600; }
+  .disclaimer { margin-top: 20px; padding: 16px 20px; background: var(--bg-elev-2); border: 1px solid var(--border-strong); border-radius: 6px; font-size: 12px; color: var(--text-secondary); line-height: 1.6; }
+  .disclaimer strong { color: var(--accent); }
+  .doc-footer { margin-top: 28px; padding-top: 20px; border-top: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; font-family: var(--font-mono); font-size: 11px; color: var(--text-muted); }
+  .doc-footer .confidential { color: var(--accent); letter-spacing: 0.1em; }
+
+  @media (max-width: 920px) {
+    .verdict-row { grid-template-columns: 1fr; }
+    .score-row { grid-template-columns: 1fr; gap: 8px; }
+    .framework-grid { grid-template-columns: 1fr; }
+    .block-item { grid-template-columns: 1fr; }
+    .masthead { grid-template-columns: 1fr; }
+    .meta-panel { text-align: left; }
+  }
+</style>
+</head>
+<body>
+<div class="grid-overlay"></div>
+<div class="container">
+
+  <header class="masthead">
+    <div>
+      <div class="eyebrow">Artifact 05  ·  Extractables &amp; Leachables  ·  Regulatory Readiness</div>
+      <h1>Regulatory Readiness Assessment</h1>
+      <div class="subtitle">NVT-217 (tenelizumab) - E&amp;L submission readiness for BLA filing</div>
+    </div>
+    <div class="meta-panel">
+      <div>Sponsor  <span class="value">NovaTera Biologics AG</span></div>
+      <div>Assessment ID  <span class="value">NVT-217-RRA-001</span></div>
+      <div>Prepared for  <span class="value">CMC / RA steering</span></div>
+      <div>Data cut-off  <span class="value">31 Jan 2026</span></div>
+      <div class="ai-tag">AI-assisted synthesis  ·  cite sources</div>
+    </div>
+  </header>
+
+  <!-- VERDICT + GAUGE -->
+  <div class="verdict-row">
+    <div class="gauge-card">
+      <div class="gauge">
+        <svg viewBox="0 0 200 110" xmlns="http://www.w3.org/2000/svg">
+          <path d="M 18 100 A 82 82 0 0 1 182 100" fill="none" stroke="#1c2331" stroke-width="14" stroke-linecap="round"/>
+          <path id="gauge-fill" d="M 18 100 A 82 82 0 0 1 182 100" fill="none" stroke="#ef4444" stroke-width="14" stroke-linecap="round" stroke-dasharray="258" stroke-dashoffset="144.5"/>
+        </svg>
+        <div class="g-score"><span class="num" id="score-num">44</span><span class="den">/100 readiness</span></div>
+      </div>
+      <div class="verdict-label">NOT READY</div>
+      <div class="verdict-sub">E&amp;L submission posture</div>
+    </div>
+    <div class="verdict-statement">
+      <h2>NVT-217 is not E&amp;L submission-ready. One submission-blocking finding and incomplete shelf-life data prevent filing at this time.</h2>
+      <p>Across six readiness dimensions, two are <span class="hl">Not Ready</span> (toxicological assessment, leachables data completeness) and three are Conditional. The decisive item is the confirmed NDBA leachable exceeding its acceptable-intake-derived limit by approximately 3.6-fold and trending upward. A credible remediation path exists, but it depends on a supplier change that is not yet verified and on completing the shelf-life dataset.</p>
+      <div class="gate">Earliest credible readiness gate: <b>Q4 2026</b>, contingent on the conditions below.</div>
+    </div>
+  </div>
+
+  <!-- SCORECARD -->
+  <div class="section-title">Readiness scorecard <span class="hint">six dimensions, each scored from the cited evidence</span></div>
+  <div class="scorecard" id="scorecard"></div>
+
+  <!-- BLOCKING ITEMS -->
+  <div class="section-title">Submission-gating items <span class="hint">must close before an E&amp;L-defensible filing</span></div>
+  <div class="blocking-grid" id="blocking-grid"></div>
+
+  <!-- FRAMEWORK COVERAGE -->
+  <div class="section-title">Regulatory framework coverage <span class="hint">posture against the applicable guidance set</span></div>
+  <div class="framework-grid" id="framework-grid"></div>
+
+  <!-- EXIT CRITERIA -->
+  <div class="section-title">Conditions for readiness <span class="hint">exit criteria for the Q4 2026 go / no-go gate</span></div>
+  <div class="exit-list" id="exit-list"></div>
+
+  <!-- TRACEABILITY -->
+  <div class="legend">
+    <h4>Source documents - full traceability</h4>
+    <span class="doc-row"><span class="doc">NVT-217-DPS-001</span> v3.2 · Drug Product Specification &nbsp;&nbsp; <span class="doc">NVT-217-CCS-001</span> v2.0 · Container Closure System</span>
+    <span class="doc-row"><span class="doc">NVT-217-ES-001</span> v1.1 · Extractables Study Report &nbsp;&nbsp; <span class="doc">NVT-217-LS-002</span> v1.0 · Leachables Stability (24M interim)</span>
+    <span class="doc-row"><span class="doc">NVT-217-RA-001</span> v2.0 · Internal E&amp;L Risk Assessment &nbsp;&nbsp; <span class="doc">ESM-CN-2025-014</span> · Supplier Change Notification</span>
+    <span class="doc-row">Cross-references: Artifact 01 (Risk Register) · Artifact 02 (Gap Assessment) · Artifact 03 (Decision Brief) · Artifact 04 (Supplier Change)</span>
+  </div>
+
+  <div class="disclaimer">
+    <strong>Scope and limitations.</strong> This readiness assessment is an AI-assisted synthesis of the cited project documents, prepared to support a human go / no-go decision. Dimension scores are a structured judgement from the cited evidence, not a validated quantitative metric, and the readiness gauge is indicative. This document does not constitute a regulatory decision, a filing strategy, or a toxicological conclusion. All scores, blocking items, and exit criteria require review and sign-off by qualified QA, RA, and toxicology personnel. Key limits depend on assumptions documented in Artifact 03 (notably the exposure-duration tier and the applied NDBA acceptable intake).
+  </div>
+
+  <div class="doc-footer">
+    <div>Generated by Claude · E&amp;L Scientific Copilot · Synthesis from project knowledge</div>
+    <div class="confidential">CONFIDENTIAL · AI output requires QA / RA / Toxicology review</div>
+  </div>
+
+</div>
+
+<script>
+// =================== SCORECARD DATA ===================
+// status: ready | conditional | notready ; score 0-100
+const DIMENSIONS = [
+  { dim: "Analytical characterization", ref: "USP <1663>/<1664> · ICH Q3E", status: "conditional", score: 65,
+    driver: "GC/LC/ICP-MS coverage in place and AET derived. Gaps: two tentative IDs unconfirmed; NDBzA absent from the panel ahead of the supplier change.", cite: "ES-001 §4, §7" },
+  { dim: "Toxicological assessment", ref: "ICH M7(R2) + addendum", status: "notready", score: 30,
+    driver: "NDBA exceeds its AI-derived limit; MBT classification unresolved; compound-specific AI methodology not yet formally integrated.", cite: "RA-001 §3, §7" },
+  { dim: "Leachables data completeness", ref: "ICH Q3E · stability principles", status: "notready", score: 35,
+    driver: "24 of 36 months available; both compounds of concern trending upward; end-of-shelf-life position rests on extrapolation, not data.", cite: "LS-002 §2, §5" },
+  { dim: "Change-control readiness", ref: "ICH Q3E §6", status: "conditional", score: 50,
+    driver: "Supplier change open; re-qualification scoped but not executed; introduces a new nitrosamine pathway (NDBzA) requiring method extension.", cite: "ESM-CN-2025-014 · A04" },
+  { dim: "Documentation & dossier", ref: "ICH Q3E §6", status: "conditional", score: 60,
+    driver: "Risk assessment re-baselined to v2.0 under the current framework; downstream alignment sweep of study reports still required.", cite: "RA-001 §1, F-06" },
+  { dim: "Regulatory strategy", ref: "FDA / EMA nitrosamines", status: "notready", score: 25,
+    driver: "No documented FDA/EMA notification plan for the NDBA finding and no interim control position for already-manufactured material.", cite: "RA-001 §6 · A03" },
+];
+
+// =================== BLOCKING ITEMS ===================
+const BLOCKING = [
+  { id: "BLK-01", severity: "critical", title: "NDBA leachable exceeds its acceptable-intake-derived limit", desc: "8 ng/mL in drug product at 24M versus a 2.2 ng/mL limit (~3.6x), trending upward. A cohort-of-concern nitrosamine cannot be filed in exceedance without remediation.", owner: "Tox + Analytical + RA", cite: "ES-001 §5.1 · LS-002 §4.1" },
+  { id: "BLK-02", severity: "critical", title: "Leachables data do not cover the full shelf life", desc: "30M and 36M timepoints outstanding; end-of-shelf-life levels for NDBA and MBT are not yet measured.", owner: "Analytical Sciences", cite: "LS-002 §5 · CAPA-2025-031" },
+  { id: "BLK-03", severity: "major", title: "No regulatory notification strategy for the nitrosamine finding", desc: "FDA/EMA engagement timing and interim risk-management position for released material are undocumented.", owner: "Regulatory Affairs", cite: "RA-001 §6 · CAPA-2026-002" },
+  { id: "BLK-04", severity: "major", title: "Analytical panel blind to the introduced nitrosamine (NDBzA)", desc: "The planned supplier change adds a dibenzylamine pathway; NDBzA is outside the validated panel, so the new grade cannot yet be properly evaluated.", owner: "Analytical Sciences", cite: "ESM-CN-2025-014 §4.2 · A04" },
+];
+
+// =================== FRAMEWORK COVERAGE ===================
+const FRAMEWORKS = [
+  { name: "ICH Q3D(R2) - elemental impurities", status: "met", icon: "OK", note: "Elementals below PDE thresholds; well-characterized." },
+  { name: "ICH Q3C(R8) - residual solvents", status: "met", icon: "OK", note: "Residual solvents far below Class 2 PDE values." },
+  { name: "USP <1663> / <1664>", status: "partial", icon: "~", note: "Framework applied; identification confidence and AET completeness have open items." },
+  { name: "FDA Container Closure (1999)", status: "partial", icon: "~", note: "CCS suitability addressed; data completeness pending full shelf life." },
+  { name: "ICH M7(R2) + addendum", status: "gap", icon: "!", note: "Nitrosamine exceedance and unresolved MBT classification; AI methodology not integrated." },
+  { name: "FDA / EMA nitrosamines", status: "gap", icon: "!", note: "NDBA exceedance unresolved; no notification strategy; NDBzA pathway uncharacterized." },
+];
+
+// =================== EXIT CRITERIA ===================
+const EXIT = [
+  { text: "<strong>NDBA below limit confirmed</strong> in the drug product on the remediated CCS, verified under representative sponsor conditions.", ref: "A04 · INC-01" },
+  { text: "<strong>Full shelf-life leachables data</strong> (36M) complete, with a kinetic model replacing linear extrapolation.", ref: "CAPA-2025-031" },
+  { text: "<strong>NDBzA method validated</strong> and the new grade characterized for the introduced nitrosamine pathway.", ref: "GAP-05 · A04" },
+  { text: "<strong>MBT classification resolved</strong> via a documented compound-specific PDE and toxicology decision.", ref: "CAPA-2026-003" },
+  { text: "<strong>Regulatory notification strategy documented</strong> and an interim control position defined for released material.", ref: "CAPA-2026-002" },
+  { text: "<strong>Documentation alignment sweep complete</strong> against RA-001 v2.0 and the ICH M7(R2) addendum methodology.", ref: "CAPA-2026-004" },
+];
+
+// =================== RENDER ===================
+const scorecard = document.getElementById('scorecard');
+const blockingGrid = document.getElementById('blocking-grid');
+const frameworkGrid = document.getElementById('framework-grid');
+const exitList = document.getElementById('exit-list');
+
+const ST_LABEL = { ready: "Ready", conditional: "Conditional", notready: "Not ready" };
+const ST_CLASS = { ready: "st-ready", conditional: "st-conditional", notready: "st-notready" };
+
+function renderScorecard() {
+  scorecard.innerHTML = DIMENSIONS.map(d => `
+    <div class="score-row">
+      <div class="dim">${d.dim}<span class="dim-ref">${d.ref}</span></div>
+      <div><span class="status-pill ${ST_CLASS[d.status]}">${ST_LABEL[d.status]}</span></div>
+      <div class="score-bar-wrap">
+        <div class="score-bar"><div class="fill ${d.status}" style="width:${d.score}%"></div></div>
+        <span class="pct">${d.score}</span>
+      </div>
+      <div class="driver">${d.driver}<br><span class="cite">${d.cite}</span></div>
+    </div>
+  `).join('');
+}
+
+function renderBlocking() {
+  blockingGrid.innerHTML = BLOCKING.map(b => `
+    <div class="block-item ${b.severity === 'major' ? 'major' : ''}">
+      <div class="bi-id">${b.id}</div>
+      <div class="bi-body">
+        <div class="bi-title">${b.title}</div>
+        <div class="bi-desc">${b.desc}</div>
+        <span class="bi-cite">${b.cite}</span>
+      </div>
+      <div class="bi-status">
+        <span class="bi-blocking">${b.severity === 'major' ? 'Major' : 'Blocking'}</span>
+        <div class="bi-owner">${b.owner}</div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function renderFrameworks() {
+  frameworkGrid.innerHTML = FRAMEWORKS.map(f => `
+    <div class="fw-item">
+      <div class="fw-icon ${f.status}">${f.icon}</div>
+      <div class="fw-body">
+        <div class="fw-name">${f.name}</div>
+        <div class="fw-note">${f.note}</div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function renderExit() {
+  exitList.innerHTML = EXIT.map(e => `
+    <div class="exit">
+      <div class="x-check"></div>
+      <div class="x-text">${e.text}</div>
+      <div class="x-ref">${e.ref}</div>
+    </div>
+  `).join('');
+}
+
+// Animate gauge to computed average score
+function setGauge() {
+  const avg = Math.round(DIMENSIONS.reduce((s, d) => s + d.score, 0) / DIMENSIONS.length);
+  document.getElementById('score-num').textContent = avg;
+  const total = 258; // approx arc length
+  const offset = total * (1 - avg / 100);
+  document.getElementById('gauge-fill').setAttribute('stroke-dashoffset', offset);
+  // color by band
+  const fill = document.getElementById('gauge-fill');
+  let color = '#ef4444';
+  if (avg >= 70) color = '#10b981'; else if (avg >= 50) color = '#eab308';
+  fill.setAttribute('stroke', color);
+}
+
+renderScorecard();
+renderBlocking();
+renderFrameworks();
+renderExit();
+setGauge();
+</script>
+</body>
+</html>
