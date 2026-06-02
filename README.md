@@ -7,7 +7,7 @@ regulatory review workflow, built around a fictional case study
 analytical chemists, and QA/RA teams across a connected set of deliverables -
 from risk register to regulatory readiness.
 
-Repository: https://github.com/gaetanobonifacio-ux/Extractables-Leachables-cockpit
+Repository: https://github.com/Gaetano-Bonifacio/Extractables-Leachables-cockpit
 
 > **AI output requires QA / Toxicology review.** The case is fictional and for
 > demonstration purposes only. You can r-use this tool with your drug-related documentation. Nothing here is regulatory, toxicological, or legal advice.
@@ -19,7 +19,7 @@ Repository: https://github.com/gaetanobonifacio-ux/Extractables-Leachables-cockp
 **Online (live site):**
 
 ```
-https://gaetanobonifacio-ux.github.io/Extractables-Leachables-cockpit/
+https://gaetano-bonifacio.github.io/Extractables-Leachables-cockpit/
 ```
 
 Open the link, then use the sidebar or the workflow map to move between the
